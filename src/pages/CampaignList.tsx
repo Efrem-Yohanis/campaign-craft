@@ -26,13 +26,13 @@ import CampaignDetailDialog from "@/components/CampaignDetailDialog";
 export default function CampaignList() {
   const { campaigns, deleteCampaign } = useCampaigns();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<CampaignStatus | "All">("All");
+  const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewId, setViewId] = useState<string | null>(null);
 
   const filtered = campaigns.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = statusFilter === "All" || c.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || c.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -47,7 +47,6 @@ export default function CampaignList() {
         </Link>
       </div>
 
-      {/* Filters */}
       <div className="flex gap-3 mb-4">
         <Input
           placeholder="Search by name"
@@ -57,38 +56,39 @@ export default function CampaignList() {
         />
         <Select
           value={statusFilter}
-          onValueChange={(v) => setStatusFilter(v as CampaignStatus | "All")}
+          onValueChange={(v) => setStatusFilter(v as CampaignStatus | "all")}
         >
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All">All statuses</SelectItem>
-            <SelectItem value="Active">Active</SelectItem>
-            <SelectItem value="Paused">Paused</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="paused">Paused</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Table */}
       <div className="bg-card border rounded-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-secondary/50">
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Name</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Channel</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Sender</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Schedule</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Frequency</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Start</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">End</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Recipients</th>
               <th className="text-right px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
                   No campaigns found.
                 </td>
               </tr>
@@ -96,34 +96,20 @@ export default function CampaignList() {
             {filtered.map((c) => (
               <tr key={c.id} className="border-b last:border-b-0 hover:bg-secondary/30">
                 <td className="px-4 py-3 font-medium">{c.name}</td>
-                <td className="px-4 py-3">{c.channel}</td>
-                <td className="px-4 py-3">{c.status}</td>
-                <td className="px-4 py-3">{c.scheduleType}</td>
+                <td className="px-4 py-3">{c.sender_id || "—"}</td>
+                <td className="px-4 py-3 capitalize">{c.status}</td>
+                <td className="px-4 py-3 capitalize">{c.schedule.frequency}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.startDate ? new Date(c.startDate).toLocaleDateString() : "—"}
+                  {c.schedule.start_date ? new Date(c.schedule.start_date).toLocaleDateString() : "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.endDate ? new Date(c.endDate).toLocaleDateString() : "—"}
+                  {c.schedule.end_date ? new Date(c.schedule.end_date).toLocaleDateString() : "—"}
                 </td>
+                <td className="px-4 py-3">{c.audience.total_count.toLocaleString()}</td>
                 <td className="px-4 py-3 text-right space-x-3">
-                  <button
-                    onClick={() => setViewId(c.id)}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    View
-                  </button>
-                  <Link
-                    to={`/campaigns/${c.id}/edit`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Edit
-                  </Link>
-                  <button
-                    onClick={() => setDeleteId(c.id)}
-                    className="text-sm text-destructive hover:underline"
-                  >
-                    Delete
-                  </button>
+                  <button onClick={() => setViewId(c.id)} className="text-sm text-primary hover:underline">View</button>
+                  <Link to={`/campaigns/${c.id}/edit`} className="text-sm text-primary hover:underline">Edit</Link>
+                  <button onClick={() => setDeleteId(c.id)} className="text-sm text-destructive hover:underline">Delete</button>
                 </td>
               </tr>
             ))}
@@ -131,7 +117,6 @@ export default function CampaignList() {
         </table>
       </div>
 
-      {/* Delete confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -144,10 +129,7 @@ export default function CampaignList() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (deleteId) deleteCampaign(deleteId);
-                setDeleteId(null);
-              }}
+              onClick={() => { if (deleteId) deleteCampaign(deleteId); setDeleteId(null); }}
             >
               Delete
             </AlertDialogAction>
@@ -155,7 +137,6 @@ export default function CampaignList() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* View detail dialog */}
       {viewCampaign && (
         <CampaignDetailDialog
           campaign={viewCampaign}

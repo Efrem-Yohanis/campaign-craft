@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useCampaigns } from "@/context/CampaignContext";
 import { Button } from "@/components/ui/button";
 import type { WizardData } from "@/types/campaign";
-import { EMPTY_WIZARD } from "@/types/campaign";
+import { EMPTY_WIZARD, SUPPORTED_LANGUAGES } from "@/types/campaign";
 import StepBasics from "@/components/wizard/StepBasics";
 import StepSchedule from "@/components/wizard/StepSchedule";
 import StepMessages from "@/components/wizard/StepMessages";
@@ -22,19 +22,8 @@ export default function CampaignCreate() {
   const navigate = useNavigate();
   const { addCampaign } = useCampaigns();
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<WizardData>({ ...EMPTY_WIZARD });
+  const [data, setData] = useState<WizardData>({ ...EMPTY_WIZARD, content: { ...EMPTY_WIZARD.content } });
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Determine visible steps: skip schedule if Immediate
-  const isScheduled = data.scheduleType === "Scheduled";
-  const visibleSteps = isScheduled
-    ? [0, 1, 2, 3, 4]
-    : [0, 2, 3, 4]; // skip step 1
-
-  const currentVisibleIndex = visibleSteps.indexOf(step);
-  const totalVisible = visibleSteps.length;
-  const displayStepNum = currentVisibleIndex + 1;
-  const displayStepLabel = STEP_LABELS[step];
 
   function update(partial: Partial<WizardData>) {
     setData((prev) => ({ ...prev, ...partial }));
@@ -46,29 +35,37 @@ export default function CampaignCreate() {
 
     if (step === 0) {
       if (!data.name.trim()) errs.name = "Name is required";
-      if (!data.channel) errs.channel = "Channel is required";
-      if (data.channel === "SMS" && !data.sender.trim()) errs.sender = "Sender is required for SMS";
-      if (!data.scheduleType) errs.scheduleType = "Schedule type is required";
-    }
-
-    if (step === 1) {
-      if (!data.startDate) errs.startDate = "Start date is required";
-      if (!data.endDate) errs.endDate = "End date is required";
-      if (data.startDate && data.endDate && data.startDate >= data.endDate) {
-        errs.endDate = "End date must be after start date";
+      if (data.sender_id) {
+        if (data.sender_id.length < 3 || data.sender_id.length > 11) {
+          errs.sender_id = "Sender ID must be 3–11 characters";
+        } else if (!/^[A-Za-z0-9_]+$/.test(data.sender_id)) {
+          errs.sender_id = "Only letters, numbers, and underscores allowed";
+        }
       }
     }
 
+    if (step === 1) {
+      if (!data.start_date) errs.start_date = "Start date is required";
+      if (!data.end_date) errs.end_date = "End date is required";
+      if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+        errs.end_date = "End date must be after start date";
+      }
+      if (!data.frequency) errs.frequency = "Frequency is required";
+      if (data.run_days.length === 0) errs.run_days = "Select at least one run day";
+      const hasTime = data.send_times.some((t) => t.trim()) && data.end_times.some((t) => t.trim());
+      if (!hasTime) errs.send_times = "At least one time window is required";
+    }
+
     if (step === 2) {
-      const hasMessage = data.messages.some((m) => m.text.trim().length > 0);
-      if (!hasMessage) errs.messages = "At least one message is required";
+      const hasContent = SUPPORTED_LANGUAGES.some((l) => data.content[l].trim().length > 0);
+      if (!hasContent) errs.content = "At least one language message is required";
     }
 
     if (step === 3) {
-      if (!data.audienceType) errs.audienceType = "Select an audience source";
-      if (data.audienceType === "file" && !data.audienceFileName) errs.audienceFile = "Upload a file";
-      if (data.audienceType === "segment" && data.audienceSegments.length === 0) errs.audienceSegments = "Select at least one segment";
-      if (data.audienceType === "sql" && !data.audienceSql.trim()) errs.audienceSql = "Enter a SQL query";
+      if (data.recipients.length === 0) errs.recipients = "Add at least one recipient";
+      const phonePattern = /^\+?[1-9]\d{1,14}$/;
+      const invalid = data.recipients.findIndex((r) => !phonePattern.test(r.msisdn));
+      if (invalid >= 0) errs.recipients = `Recipient ${invalid + 1} has an invalid phone number`;
     }
 
     setErrors(errs);
@@ -77,38 +74,36 @@ export default function CampaignCreate() {
 
   function goNext() {
     if (!validateStep()) return;
-    const idx = visibleSteps.indexOf(step);
-    if (idx < visibleSteps.length - 1) {
-      setStep(visibleSteps[idx + 1]);
-    }
+    if (step < 4) setStep(step + 1);
   }
 
   function goBack() {
-    const idx = visibleSteps.indexOf(step);
-    if (idx > 0) {
-      setStep(visibleSteps[idx - 1]);
-    }
+    if (step > 0) setStep(step - 1);
   }
 
   function handleSubmit() {
     addCampaign({
       name: data.name,
-      channel: data.channel as any,
-      sender: data.channel === "SMS" ? data.sender : undefined,
-      status: "Active",
-      scheduleType: data.scheduleType as any,
-      startDate: isScheduled ? data.startDate : undefined,
-      endDate: isScheduled ? data.endDate : undefined,
-      messages: data.messages.filter((m) => m.text.trim()),
+      status: "draft",
+      sender_id: data.sender_id,
+      schedule: {
+        start_date: data.start_date,
+        end_date: data.end_date,
+        frequency: data.frequency as any,
+        run_days: data.run_days,
+        send_times: data.send_times,
+        end_times: data.end_times,
+        is_active: true,
+      },
+      message_content: {
+        content: data.content,
+        default_language: data.default_language,
+      },
       audience: {
-        type: data.audienceType as any,
-        label:
-          data.audienceType === "file"
-            ? data.audienceFileName || "Uploaded file"
-            : data.audienceType === "segment"
-              ? data.audienceSegments.join(", ")
-              : data.audienceSql.slice(0, 60),
-        recipientCount: data.audienceRecipientCount,
+        recipients: data.recipients,
+        total_count: data.recipients.length,
+        valid_count: data.recipients.length,
+        invalid_count: 0,
       },
     });
     navigate("/");
@@ -118,14 +113,12 @@ export default function CampaignCreate() {
     <div className="flex justify-center">
       <div className="w-full max-w-[800px]">
         <div className="bg-card border rounded-sm">
-          {/* Step indicator */}
           <div className="px-6 py-4 border-b">
             <span className="text-sm text-muted-foreground">
-              Step {displayStepNum} of {totalVisible}: {displayStepLabel}
+              Step {step + 1} of 5: {STEP_LABELS[step]}
             </span>
           </div>
 
-          {/* Step content */}
           <div className="px-6 py-6 min-h-[320px]">
             {step === 0 && <StepBasics data={data} errors={errors} update={update} />}
             {step === 1 && <StepSchedule data={data} errors={errors} update={update} />}
@@ -134,13 +127,12 @@ export default function CampaignCreate() {
             {step === 4 && <StepReview data={data} />}
           </div>
 
-          {/* Navigation */}
           <div className="px-6 py-4 border-t flex justify-between">
             <Button
               variant="outline"
-              onClick={currentVisibleIndex === 0 ? () => navigate("/") : goBack}
+              onClick={step === 0 ? () => navigate("/") : goBack}
             >
-              {currentVisibleIndex === 0 ? "Cancel" : "Back"}
+              {step === 0 ? "Cancel" : "Back"}
             </Button>
 
             {step === 4 ? (

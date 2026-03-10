@@ -1,10 +1,18 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { WizardData, AudienceSourceType } from "@/types/campaign";
-import { MOCK_SEGMENTS } from "@/types/campaign";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { WizardData, Recipient, Language } from "@/types/campaign";
+import { SUPPORTED_LANGUAGES, LANGUAGE_LABELS } from "@/types/campaign";
+import { Plus, Trash2 } from "lucide-react";
 
 interface Props {
   data: WizardData;
@@ -13,127 +21,131 @@ interface Props {
 }
 
 export default function StepAudience({ data, errors, update }: Props) {
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Simulate parsing: generate a random recipient count
-      const count = Math.floor(Math.random() * 5000) + 100;
-      update({
-        audienceFile: file,
-        audienceFileName: file.name,
-        audienceRecipientCount: count,
-      });
-    }
+  const [bulkInput, setBulkInput] = useState("");
+  const [bulkError, setBulkError] = useState("");
+
+  function addRecipient() {
+    update({
+      recipients: [...data.recipients, { msisdn: "", lang: "en" }],
+    });
   }
 
-  function toggleSegment(segment: string) {
-    const current = data.audienceSegments;
-    const updated = current.includes(segment)
-      ? current.filter((s) => s !== segment)
-      : [...current, segment];
+  function removeRecipient(index: number) {
     update({
-      audienceSegments: updated,
-      audienceRecipientCount: updated.length * 420 + Math.floor(Math.random() * 200),
+      recipients: data.recipients.filter((_, i) => i !== index),
     });
+  }
+
+  function updateRecipient(index: number, field: keyof Recipient, value: string) {
+    const updated = [...data.recipients];
+    updated[index] = { ...updated[index], [field]: value };
+    update({ recipients: updated });
+  }
+
+  function parseBulk() {
+    setBulkError("");
+    const lines = bulkInput.trim().split("\n").filter((l) => l.trim());
+    if (!lines.length) {
+      setBulkError("No data to parse");
+      return;
+    }
+
+    const phonePattern = /^\+?[1-9]\d{1,14}$/;
+    const parsed: Recipient[] = [];
+    const errors: string[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const parts = lines[i].split(/[,\t]/).map((s) => s.trim());
+      if (parts.length < 2) {
+        errors.push(`Line ${i + 1}: expected "msisdn, lang"`);
+        continue;
+      }
+      const [msisdn, lang] = parts;
+      if (!phonePattern.test(msisdn)) {
+        errors.push(`Line ${i + 1}: invalid phone "${msisdn}"`);
+        continue;
+      }
+      if (!SUPPORTED_LANGUAGES.includes(lang as Language)) {
+        errors.push(`Line ${i + 1}: unsupported language "${lang}"`);
+        continue;
+      }
+      parsed.push({ msisdn, lang: lang as Language });
+    }
+
+    if (errors.length > 0) {
+      setBulkError(errors.slice(0, 5).join("\n") + (errors.length > 5 ? `\n...and ${errors.length - 5} more` : ""));
+      return;
+    }
+
+    update({ recipients: [...data.recipients, ...parsed] });
+    setBulkInput("");
   }
 
   return (
     <div className="space-y-5">
-      <div className="space-y-1.5">
-        <Label>Audience source</Label>
-        <RadioGroup
-          value={data.audienceType}
-          onValueChange={(v) =>
-            update({
-              audienceType: v as AudienceSourceType,
-              audienceRecipientCount: 0,
-              audienceFileName: undefined,
-              audienceSegments: [],
-              audienceSql: "",
-            })
-          }
-          className="flex gap-6 pt-1"
-        >
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="file" id="aud-file" />
-            <Label htmlFor="aud-file" className="font-normal cursor-pointer">Upload file</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="segment" id="aud-segment" />
-            <Label htmlFor="aud-segment" className="font-normal cursor-pointer">Segmented list</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <RadioGroupItem value="sql" id="aud-sql" />
-            <Label htmlFor="aud-sql" className="font-normal cursor-pointer">SQL query</Label>
-          </div>
-        </RadioGroup>
-        {errors.audienceType && <p className="text-sm text-destructive">{errors.audienceType}</p>}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Add recipients individually or paste in bulk. Each recipient needs a phone number (E.164) and language.
+      </p>
 
-      {/* File upload */}
-      {data.audienceType === "file" && (
-        <div className="space-y-1.5">
-          <Label htmlFor="file-upload">Excel file</Label>
-          <Input
-            id="file-upload"
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            onChange={handleFileChange}
-          />
-          {data.audienceFileName && (
-            <p className="text-sm text-muted-foreground">
-              {data.audienceFileName} — {data.audienceRecipientCount.toLocaleString()} recipients
-            </p>
-          )}
-          {errors.audienceFile && <p className="text-sm text-destructive">{errors.audienceFile}</p>}
-        </div>
-      )}
-
-      {/* Segment selection */}
-      {data.audienceType === "segment" && (
+      {/* Individual recipients */}
+      {data.recipients.length > 0 && (
         <div className="space-y-2">
-          <Label>Select segments</Label>
-          <div className="space-y-2 pt-1">
-            {MOCK_SEGMENTS.map((seg) => (
-              <div key={seg} className="flex items-center gap-2">
-                <Checkbox
-                  id={`seg-${seg}`}
-                  checked={data.audienceSegments.includes(seg)}
-                  onCheckedChange={() => toggleSegment(seg)}
+          <Label>Recipients ({data.recipients.length})</Label>
+          <div className="max-h-60 overflow-y-auto space-y-2 border rounded-sm p-3">
+            {data.recipients.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  value={r.msisdn}
+                  onChange={(e) => updateRecipient(i, "msisdn", e.target.value)}
+                  placeholder="+251912345678"
+                  className="flex-1"
                 />
-                <Label htmlFor={`seg-${seg}`} className="font-normal cursor-pointer">{seg}</Label>
+                <Select
+                  value={r.lang}
+                  onValueChange={(v) => updateRecipient(i, "lang", v)}
+                >
+                  <SelectTrigger className="w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SUPPORTED_LANGUAGES.map((l) => (
+                      <SelectItem key={l} value={l}>{LANGUAGE_LABELS[l]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button
+                  onClick={() => removeRecipient(i)}
+                  className="text-destructive hover:text-destructive/80"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
               </div>
             ))}
           </div>
-          {data.audienceSegments.length > 0 && (
-            <p className="text-sm text-muted-foreground">
-              {data.audienceRecipientCount.toLocaleString()} estimated recipients
-            </p>
-          )}
-          {errors.audienceSegments && <p className="text-sm text-destructive">{errors.audienceSegments}</p>}
         </div>
       )}
 
-      {/* SQL query */}
-      {data.audienceType === "sql" && (
-        <div className="space-y-1.5">
-          <Label htmlFor="sql-query">SQL query</Label>
-          <Textarea
-            id="sql-query"
-            value={data.audienceSql}
-            onChange={(e) => update({ audienceSql: e.target.value, audienceRecipientCount: e.target.value.trim() ? 847 : 0 })}
-            placeholder="SELECT phone FROM users WHERE ..."
-            rows={4}
-            className="font-mono text-sm"
-          />
-          {data.audienceSql.trim() && (
-            <p className="text-sm text-muted-foreground">
-              {data.audienceRecipientCount.toLocaleString()} estimated recipients
-            </p>
-          )}
-          {errors.audienceSql && <p className="text-sm text-destructive">{errors.audienceSql}</p>}
-        </div>
-      )}
+      <Button type="button" variant="outline" size="sm" onClick={addRecipient}>
+        <Plus className="h-3.5 w-3.5 mr-1" /> Add recipient
+      </Button>
+
+      {errors.recipients && <p className="text-sm text-destructive">{errors.recipients}</p>}
+
+      {/* Bulk paste */}
+      <div className="space-y-1.5 pt-2 border-t">
+        <Label>Bulk import (CSV format)</Label>
+        <Textarea
+          value={bulkInput}
+          onChange={(e) => setBulkInput(e.target.value)}
+          placeholder={"+251912345678, en\n+251911111111, am\n+251922222222, ti"}
+          rows={5}
+          className="font-mono text-sm"
+        />
+        {bulkError && <pre className="text-sm text-destructive whitespace-pre-wrap">{bulkError}</pre>}
+        <Button type="button" variant="outline" size="sm" onClick={parseBulk} disabled={!bulkInput.trim()}>
+          Parse & add
+        </Button>
+      </div>
     </div>
   );
 }

@@ -5,58 +5,110 @@ const MOCK_CAMPAIGNS: Campaign[] = [
   {
     id: "1",
     name: "Summer Sale Kickoff",
-    channel: "SMS",
-    sender: "SHOPNOW",
-    status: "Active",
-    scheduleType: "Scheduled",
-    startDate: "2024-08-01T09:00",
-    endDate: "2024-08-05T17:00",
-    messages: [
-      { language: "en", text: "Don't miss our Summer Sale! Up to 50% off." },
-      { language: "am", text: "የበጋ ሽያጫችንን አይዝሩ! እስከ 50% ቅናሽ።" },
-    ],
-    audience: { type: "file", label: "new_subscribers_july.xlsx", recipientCount: 1428 },
-    createdAt: "2024-07-20T10:00:00Z",
+    status: "active",
+    sender_id: "SHOPNOW",
+    schedule: {
+      start_date: "2024-08-01T09:00",
+      end_date: "2024-08-05T17:00",
+      frequency: "daily",
+      run_days: [0, 1, 2, 3, 4],
+      send_times: ["09:00"],
+      end_times: ["17:00"],
+      is_active: true,
+    },
+    message_content: {
+      content: {
+        en: "Don't miss our Summer Sale! Up to 50% off.",
+        am: "የበጋ ሽያጫችንን አይዝሩ! እስከ 50% ቅናሽ።",
+        ti: "",
+        om: "",
+        so: "",
+      },
+      default_language: "en",
+    },
+    audience: {
+      recipients: [
+        { msisdn: "+251912345678", lang: "en" },
+        { msisdn: "+251911111111", lang: "am" },
+      ],
+      total_count: 1428,
+      valid_count: 1428,
+      invalid_count: 0,
+    },
+    created_at: "2024-07-20T10:00:00Z",
+    updated_at: "2024-07-20T10:00:00Z",
   },
   {
     id: "2",
     name: "Account Verification",
-    channel: "USSD",
-    status: "Completed",
-    scheduleType: "Immediate",
-    messages: [{ language: "en", text: "Verify your account by dialing *123#" }],
-    audience: { type: "segment", label: "Trial Users", recipientCount: 342 },
-    createdAt: "2024-06-15T08:30:00Z",
+    status: "completed",
+    sender_id: "VERIFY",
+    schedule: {
+      start_date: "2024-06-15T08:00",
+      end_date: "2024-06-15T18:00",
+      frequency: "daily",
+      run_days: [0, 1, 2, 3, 4, 5, 6],
+      send_times: ["08:00"],
+      end_times: ["18:00"],
+      is_active: false,
+    },
+    message_content: {
+      content: {
+        en: "Verify your account by dialing *123#",
+        am: "",
+        ti: "",
+        om: "",
+        so: "",
+      },
+      default_language: "en",
+    },
+    audience: {
+      recipients: [],
+      total_count: 342,
+      valid_count: 342,
+      invalid_count: 0,
+    },
+    created_at: "2024-06-15T08:30:00Z",
+    updated_at: "2024-06-15T08:30:00Z",
   },
   {
     id: "3",
     name: "Loyalty Rewards Update",
-    channel: "App",
-    status: "Paused",
-    scheduleType: "Scheduled",
-    startDate: "2024-09-01T06:00",
-    endDate: "2024-09-30T23:59",
-    messages: [
-      { language: "en", text: "Your loyalty points are about to expire. Redeem them now!" },
-    ],
-    audience: { type: "segment", label: "Loyalty Members", recipientCount: 5891 },
-    createdAt: "2024-08-25T14:00:00Z",
-  },
-  {
-    id: "4",
-    name: "Flash Promo Alert",
-    channel: "Flash",
-    status: "Active",
-    scheduleType: "Immediate",
-    messages: [{ language: "en", text: "Flash deal: 30% off for the next 2 hours!" }],
-    audience: { type: "sql", label: "SELECT * FROM users WHERE last_purchase > NOW() - INTERVAL '30 days'", recipientCount: 2104 },
-    createdAt: "2024-07-30T12:00:00Z",
+    status: "paused",
+    sender_id: "LOYALTY",
+    schedule: {
+      start_date: "2024-09-01T06:00",
+      end_date: "2024-09-30T23:59",
+      frequency: "weekly",
+      run_days: [0, 2, 4],
+      send_times: ["06:00"],
+      end_times: ["20:00"],
+      is_active: false,
+    },
+    message_content: {
+      content: {
+        en: "Your loyalty points are about to expire. Redeem them now!",
+        am: "",
+        ti: "",
+        om: "",
+        so: "",
+      },
+      default_language: "en",
+    },
+    audience: {
+      recipients: [],
+      total_count: 5891,
+      valid_count: 5891,
+      invalid_count: 0,
+    },
+    created_at: "2024-08-25T14:00:00Z",
+    updated_at: "2024-08-25T14:00:00Z",
   },
 ];
 
 interface CampaignContextType {
   campaigns: Campaign[];
-  addCampaign: (campaign: Omit<Campaign, "id" | "createdAt">) => void;
+  addCampaign: (campaign: Omit<Campaign, "id" | "created_at" | "updated_at">) => void;
   deleteCampaign: (id: string) => void;
 }
 
@@ -65,12 +117,13 @@ const CampaignContext = createContext<CampaignContextType | null>(null);
 export function CampaignProvider({ children }: { children: ReactNode }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>(MOCK_CAMPAIGNS);
 
-  const addCampaign = useCallback((data: Omit<Campaign, "id" | "createdAt">) => {
+  const addCampaign = useCallback((data: Omit<Campaign, "id" | "created_at" | "updated_at">) => {
     setCampaigns((prev) => [
       {
         ...data,
         id: String(Date.now()),
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       },
       ...prev,
     ]);

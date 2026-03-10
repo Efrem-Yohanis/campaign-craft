@@ -5,7 +5,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Campaign } from "@/types/campaign";
-import { LANGUAGE_LABELS } from "@/types/campaign";
+import { LANGUAGE_LABELS, FREQUENCY_LABELS, DAY_LABELS } from "@/types/campaign";
+import type { Language } from "@/types/campaign";
 
 interface Props {
   campaign: Campaign;
@@ -16,19 +17,15 @@ interface Props {
 export default function CampaignDetailDialog({ campaign, open, onClose }: Props) {
   const c = campaign;
 
-  const scheduleText =
-    c.scheduleType === "Immediate"
-      ? "for immediate delivery"
-      : `scheduled from ${new Date(c.startDate!).toLocaleString()} to ${new Date(c.endDate!).toLocaleString()}`;
+  const filledLangs = (Object.entries(c.message_content.content) as [Language, string][])
+    .filter(([, text]) => text.trim())
+    .map(([lang]) => LANGUAGE_LABELS[lang]);
 
-  const languageList = c.messages.map((m) => LANGUAGE_LABELS[m.language]).join(" and ");
+  const langText = filledLangs.length > 1
+    ? filledLangs.slice(0, -1).join(", ") + " and " + filledLangs[filledLangs.length - 1]
+    : filledLangs[0] || "none";
 
-  const audienceText =
-    c.audience.type === "file"
-      ? `the uploaded file "${c.audience.label}"`
-      : c.audience.type === "segment"
-        ? `the segment "${c.audience.label}"`
-        : "a SQL query";
+  const daysText = c.schedule.run_days.map((d) => DAY_LABELS[d] || `Day ${d}`).join(", ");
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -38,17 +35,16 @@ export default function CampaignDetailDialog({ campaign, open, onClose }: Props)
         </DialogHeader>
         <div className="font-serif text-base leading-relaxed text-foreground space-y-4 py-2">
           <p>
-            The campaign <strong>"{c.name}"</strong> will be sent via{" "}
-            <strong>{c.channel}</strong>
-            {c.sender && (
-              <>
-                {" "}from sender <strong>"{c.sender}"</strong>
-              </>
-            )}
-            . It is {scheduleText}. Messages will be delivered in{" "}
-            <strong>{languageList}</strong>. The audience will be sourced from{" "}
-            {audienceText}, targeting an estimated{" "}
-            <strong>{c.audience.recipientCount.toLocaleString()} recipients</strong>.
+            The campaign <strong>"{c.name}"</strong>
+            {c.sender_id && <> with sender ID <strong>"{c.sender_id}"</strong></>}
+            {" "}is scheduled from{" "}
+            <strong>{new Date(c.schedule.start_date).toLocaleString()}</strong> to{" "}
+            <strong>{new Date(c.schedule.end_date).toLocaleString()}</strong>.
+            It runs <strong>{FREQUENCY_LABELS[c.schedule.frequency]}</strong>
+            {daysText && <> on <strong>{daysText}</strong></>}.
+            Messages are delivered in <strong>{langText}</strong> (default: {LANGUAGE_LABELS[c.message_content.default_language]}).
+            Audience: <strong>{c.audience.total_count.toLocaleString()} recipients</strong>
+            {c.audience.invalid_count > 0 && <> ({c.audience.invalid_count} invalid)</>}.
           </p>
         </div>
       </DialogContent>

@@ -98,14 +98,14 @@ export default function CampaignList() {
                 <td className="px-4 py-3 font-medium">{c.name}</td>
                 <td className="px-4 py-3">{c.sender_id || "—"}</td>
                 <td className="px-4 py-3 capitalize">{c.status}</td>
-                <td className="px-4 py-3 capitalize">{c.schedule.frequency}</td>
+                <td className="px-4 py-3 capitalize">{c.schedule?.frequency ?? "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.schedule.start_date ? new Date(c.schedule.start_date).toLocaleDateString() : "—"}
+                  {c.schedule?.start_date ? new Date(c.schedule.start_date).toLocaleDateString() : "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.schedule.end_date ? new Date(c.schedule.end_date).toLocaleDateString() : "—"}
+                  {c.schedule?.end_date ? new Date(c.schedule.end_date).toLocaleDateString() : "—"}
                 </td>
-                <td className="px-4 py-3">{c.audience.total_count.toLocaleString()}</td>
+                <td className="px-4 py-3">{c.audience?.total_count?.toLocaleString() ?? "0"}</td>
                 <td className="px-4 py-3 text-right space-x-3">
                   <button onClick={() => setViewId(c.id)} className="text-sm text-primary hover:underline">View</button>
                   <Link to={`/campaigns/${c.id}/edit`} className="text-sm text-primary hover:underline">Edit</Link>

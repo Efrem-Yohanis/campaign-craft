@@ -1,19 +1,27 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Megaphone, Users, CalendarClock, MessageSquareText } from "lucide-react";
 
 const NAV_ITEMS = [
-  { label: "Campaigns", href: "/" },
-  { label: "Audiences", href: "/audiences" },
+  { label: "Campaigns", href: "/", icon: Megaphone },
+  { label: "Audiences", href: "/audiences", icon: Users },
+  { label: "Schedules", href: "/schedules", icon: CalendarClock },
+  { label: "Messages", href: "/messages", icon: MessageSquareText },
 ];
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
 
+  function isActive(href: string) {
+    if (href === "/") return location.pathname === "/";
+    return location.pathname.startsWith(href);
+  }
+
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden">
       {/* Sidebar */}
-      <aside className="hidden md:flex w-56 flex-col border-r bg-card">
+      <aside className="hidden md:flex w-56 flex-col border-r bg-card shrink-0">
         <div className="px-6 py-5 border-b">
           <span className="text-sm font-semibold tracking-wide uppercase text-foreground">
             Campaign Manager
@@ -25,12 +33,13 @@ export default function AppShell({ children }: { children: ReactNode }) {
               key={item.href}
               to={item.href}
               className={cn(
-                "block px-3 py-2 text-sm rounded-sm",
-                location.pathname === item.href
+                "flex items-center gap-2 px-3 py-2 text-sm rounded-sm",
+                isActive(item.href)
                   ? "bg-accent font-medium text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
+              <item.icon className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           ))}

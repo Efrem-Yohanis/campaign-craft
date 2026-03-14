@@ -110,8 +110,8 @@ export default function CampaignCreate() {
   }
 
   return (
-    <div className="flex justify-center">
-      <div className="w-full max-w-[800px]">
+    <div>
+      <div className="w-full">
         <div className="bg-card border rounded-sm">
           <div className="px-6 py-4 border-b">
             <span className="text-sm text-muted-foreground">

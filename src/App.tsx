@@ -7,6 +7,12 @@ import { CampaignProvider } from "@/context/CampaignContext";
 import AppShell from "@/components/AppShell";
 import CampaignList from "@/pages/CampaignList";
 import CampaignCreate from "@/pages/CampaignCreate";
+import AudienceList from "@/pages/AudienceList";
+import AudienceDetail from "@/pages/AudienceDetail";
+import ScheduleList from "@/pages/ScheduleList";
+import ScheduleDetail from "@/pages/ScheduleDetail";
+import MessageContentList from "@/pages/MessageContentList";
+import MessageContentDetail from "@/pages/MessageContentDetail";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -23,6 +29,12 @@ const App = () => (
               <Route path="/" element={<CampaignList />} />
               <Route path="/campaigns/new" element={<CampaignCreate />} />
               <Route path="/campaigns/:id/edit" element={<CampaignCreate />} />
+              <Route path="/audiences" element={<AudienceList />} />
+              <Route path="/audiences/:id" element={<AudienceDetail />} />
+              <Route path="/schedules" element={<ScheduleList />} />
+              <Route path="/schedules/:id" element={<ScheduleDetail />} />
+              <Route path="/messages" element={<MessageContentList />} />
+              <Route path="/messages/:id" element={<MessageContentDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AppShell>

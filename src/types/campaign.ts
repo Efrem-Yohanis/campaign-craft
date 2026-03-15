@@ -70,10 +70,13 @@ export interface Campaign {
 
 /* ---------- Wizard ---------- */
 
+export type AudienceSource = "manual" | "database";
+
 export interface WizardData {
   name: string;
   sender_id: string;
   // Schedule
+  schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
   frequency: Frequency | "";
@@ -84,7 +87,9 @@ export interface WizardData {
   content: Record<Language, string>;
   default_language: Language;
   // Audience
+  audience_source: AudienceSource;
   recipients: Recipient[];
+  db_query: string;
 }
 
 export const EMPTY_WIZARD: WizardData = {

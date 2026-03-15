@@ -60,14 +60,16 @@ export default function CampaignCreate() {
 
     if (step === 3) {
       if (!data.start_date) errs.start_date = "Start date is required";
-      if (!data.end_date) errs.end_date = "End date is required";
-      if (data.start_date && data.end_date && data.start_date >= data.end_date) {
-        errs.end_date = "End date must be after start date";
+      if (data.schedule_type === "recurring") {
+        if (!data.end_date) errs.end_date = "End date is required";
+        if (data.start_date && data.end_date && data.start_date >= data.end_date) {
+          errs.end_date = "End date must be after start date";
+        }
+        if (!data.frequency) errs.frequency = "Frequency is required";
+        if (data.run_days.length === 0) errs.run_days = "Select at least one run day";
+        const hasTime = data.send_times.some((t) => t.trim()) && data.end_times.some((t) => t.trim());
+        if (!hasTime) errs.send_times = "At least one time window is required";
       }
-      if (!data.frequency) errs.frequency = "Frequency is required";
-      if (data.run_days.length === 0) errs.run_days = "Select at least one run day";
-      const hasTime = data.send_times.some((t) => t.trim()) && data.end_times.some((t) => t.trim());
-      if (!hasTime) errs.send_times = "At least one time window is required";
     }
 
     setErrors(errs);

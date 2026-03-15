@@ -7,7 +7,9 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     name: "Summer Sale Kickoff",
     status: "active",
     sender_id: "SHOPNOW",
+    channels: ["sms"],
     schedule: {
+      schedule_type: "recurring",
       start_date: "2024-08-01T09:00",
       end_date: "2024-08-05T17:00",
       frequency: "daily",
@@ -15,6 +17,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       send_times: ["09:00"],
       end_times: ["17:00"],
       is_active: true,
+      status: "running",
     },
     message_content: {
       content: {
@@ -35,6 +38,16 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       valid_count: 1428,
       invalid_count: 0,
     },
+    progress: {
+      total_messages: 1428,
+      sent_count: 856,
+      failed_count: 12,
+      pending_count: 560,
+      progress_percent: 60.78,
+      status: "ACTIVE",
+      started_at: "2024-08-01T09:00:00Z",
+      completed_at: null,
+    },
     created_at: "2024-07-20T10:00:00Z",
     updated_at: "2024-07-20T10:00:00Z",
   },
@@ -43,7 +56,9 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     name: "Account Verification",
     status: "completed",
     sender_id: "VERIFY",
+    channels: ["sms", "flash_sms"],
     schedule: {
+      schedule_type: "one_time",
       start_date: "2024-06-15T08:00",
       end_date: "2024-06-15T18:00",
       frequency: "daily",
@@ -51,6 +66,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       send_times: ["08:00"],
       end_times: ["18:00"],
       is_active: false,
+      status: "completed",
     },
     message_content: {
       content: {
@@ -68,6 +84,16 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       valid_count: 342,
       invalid_count: 0,
     },
+    progress: {
+      total_messages: 342,
+      sent_count: 340,
+      failed_count: 2,
+      pending_count: 0,
+      progress_percent: 100,
+      status: "COMPLETED",
+      started_at: "2024-06-15T08:00:00Z",
+      completed_at: "2024-06-15T18:00:00Z",
+    },
     created_at: "2024-06-15T08:30:00Z",
     updated_at: "2024-06-15T08:30:00Z",
   },
@@ -76,7 +102,9 @@ const MOCK_CAMPAIGNS: Campaign[] = [
     name: "Loyalty Rewards Update",
     status: "paused",
     sender_id: "LOYALTY",
+    channels: ["sms", "app_notification"],
     schedule: {
+      schedule_type: "recurring",
       start_date: "2024-09-01T06:00",
       end_date: "2024-09-30T23:59",
       frequency: "weekly",
@@ -84,6 +112,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       send_times: ["06:00"],
       end_times: ["20:00"],
       is_active: false,
+      status: "stop",
     },
     message_content: {
       content: {
@@ -100,6 +129,16 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       total_count: 5891,
       valid_count: 5891,
       invalid_count: 0,
+    },
+    progress: {
+      total_messages: 5891,
+      sent_count: 2100,
+      failed_count: 45,
+      pending_count: 3746,
+      progress_percent: 36.41,
+      status: "STOPPED",
+      started_at: "2024-09-01T06:00:00Z",
+      completed_at: null,
     },
     created_at: "2024-08-25T14:00:00Z",
     updated_at: "2024-08-25T14:00:00Z",

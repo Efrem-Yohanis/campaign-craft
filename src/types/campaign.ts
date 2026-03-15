@@ -89,9 +89,11 @@ export interface Campaign {
   name: string;
   status: CampaignStatus;
   sender_id: string;
+  channels: Channel[];
   schedule: Schedule;
   message_content: MessageContent;
   audience: Audience;
+  progress?: CampaignProgress;
   created_at: string;
   updated_at: string;
 }

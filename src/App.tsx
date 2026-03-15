@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CampaignProvider } from "@/context/CampaignContext";
 import AppShell from "@/components/AppShell";
 import CampaignList from "@/pages/CampaignList";
+import CampaignDetail from "@/pages/CampaignDetail";
 import CampaignCreate from "@/pages/CampaignCreate";
 import AudienceList from "@/pages/AudienceList";
 import AudienceDetail from "@/pages/AudienceDetail";

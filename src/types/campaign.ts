@@ -1,5 +1,6 @@
 export type CampaignStatus = "draft" | "active" | "paused" | "completed";
 export type Frequency = "daily" | "weekly" | "monthly";
+export type ScheduleType = "one_time" | "recurring";
 export type Language = "en" | "am" | "ti" | "om" | "so";
 
 export const SUPPORTED_LANGUAGES: Language[] = ["en", "am", "ti", "om", "so"];

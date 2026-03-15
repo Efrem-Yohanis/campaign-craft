@@ -1,7 +1,22 @@
-export type CampaignStatus = "draft" | "active" | "paused" | "completed";
+export type CampaignStatus = "draft" | "active" | "paused" | "completed" | "archived";
 export type Frequency = "daily" | "weekly" | "monthly";
 export type ScheduleType = "one_time" | "recurring";
+export type ScheduleStatus = "pending" | "running" | "stop" | "completed";
+export type Channel = "sms" | "app_notification" | "flash_sms";
 export type Language = "en" | "am" | "ti" | "om" | "so";
+
+export const CHANNEL_LABELS: Record<Channel, string> = {
+  sms: "SMS",
+  app_notification: "App Notification",
+  flash_sms: "Flash SMS",
+};
+
+export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
+  pending: "Pending",
+  running: "Running",
+  stop: "Stopped",
+  completed: "Completed",
+};
 
 export const SUPPORTED_LANGUAGES: Language[] = ["en", "am", "ti", "om", "so"];
 

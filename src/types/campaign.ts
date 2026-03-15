@@ -95,6 +95,7 @@ export interface WizardData {
 export const EMPTY_WIZARD: WizardData = {
   name: "",
   sender_id: "",
+  schedule_type: "one_time",
   start_date: "",
   end_date: "",
   frequency: "",
@@ -103,5 +104,7 @@ export const EMPTY_WIZARD: WizardData = {
   end_times: [""],
   content: { en: "", am: "", ti: "", om: "", so: "" },
   default_language: "en",
+  audience_source: "manual",
   recipients: [],
+  db_query: "",
 };

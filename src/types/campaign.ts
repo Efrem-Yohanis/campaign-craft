@@ -50,6 +50,7 @@ export interface Recipient {
 }
 
 export interface Schedule {
+  schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
   frequency: Frequency;
@@ -57,6 +58,18 @@ export interface Schedule {
   send_times: string[];
   end_times: string[];
   is_active: boolean;
+  status: ScheduleStatus;
+}
+
+export interface CampaignProgress {
+  total_messages: number;
+  sent_count: number;
+  failed_count: number;
+  pending_count: number;
+  progress_percent: number;
+  status: "ACTIVE" | "COMPLETED" | "STOPPED" | "FAILED";
+  started_at: string;
+  completed_at: string | null;
 }
 
 export interface MessageContent {

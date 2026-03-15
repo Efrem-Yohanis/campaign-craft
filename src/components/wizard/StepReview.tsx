@@ -44,47 +44,55 @@ export default function StepReview({ data }: Props) {
         </div>
         <div className="px-4 py-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-xs text-muted-foreground mb-1">Start Date</p>
+            <p className="text-xs text-muted-foreground mb-1">Type</p>
+            <Badge variant="secondary">{data.schedule_type === "one_time" ? "One Time" : "Recurring"}</Badge>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">{data.schedule_type === "one_time" ? "Send Date" : "Start Date"}</p>
             <p className="font-medium text-foreground">
               {data.start_date ? new Date(data.start_date).toLocaleString() : "—"}
             </p>
           </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">End Date</p>
-            <p className="font-medium text-foreground">
-              {data.end_date ? new Date(data.end_date).toLocaleString() : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Frequency</p>
-            <p className="font-medium text-foreground">
-              {data.frequency ? FREQUENCY_LABELS[data.frequency as keyof typeof FREQUENCY_LABELS] : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Run Days</p>
-            <div className="flex flex-wrap gap-1">
-              {data.run_days.length > 0
-                ? data.run_days.map((d) => (
-                    <Badge key={d} variant="secondary" className="text-xs">
-                      {DAY_LABELS[d] || `Day ${d}`}
-                    </Badge>
-                  ))
-                : <span className="text-foreground">—</span>}
-            </div>
-          </div>
-          <div className="sm:col-span-2">
-            <p className="text-xs text-muted-foreground mb-1">Time Windows</p>
-            <div className="flex flex-wrap gap-2">
-              {data.send_times.filter((t) => t.trim()).length > 0
-                ? data.send_times.map((st, i) => (
-                    <Badge key={i} variant="outline" className="text-xs font-mono">
-                      {st || "??"} – {data.end_times[i] || "??"}
-                    </Badge>
-                  ))
-                : <span className="text-foreground">—</span>}
-            </div>
-          </div>
+          {data.schedule_type === "recurring" && (
+            <>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">End Date</p>
+                <p className="font-medium text-foreground">
+                  {data.end_date ? new Date(data.end_date).toLocaleString() : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Frequency</p>
+                <p className="font-medium text-foreground">
+                  {data.frequency ? FREQUENCY_LABELS[data.frequency as keyof typeof FREQUENCY_LABELS] : "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Run Days</p>
+                <div className="flex flex-wrap gap-1">
+                  {data.run_days.length > 0
+                    ? data.run_days.map((d) => (
+                        <Badge key={d} variant="secondary" className="text-xs">
+                          {DAY_LABELS[d] || `Day ${d}`}
+                        </Badge>
+                      ))
+                    : <span className="text-foreground">—</span>}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Time Windows</p>
+                <div className="flex flex-wrap gap-2">
+                  {data.send_times.filter((t) => t.trim()).length > 0
+                    ? data.send_times.map((st, i) => (
+                        <Badge key={i} variant="outline" className="text-xs font-mono">
+                          {st || "??"} – {data.end_times[i] || "??"}
+                        </Badge>
+                      ))
+                    : <span className="text-foreground">—</span>}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 export type CampaignStatus = "draft" | "active" | "paused" | "completed";
 export type Frequency = "daily" | "weekly" | "monthly";
+export type ScheduleType = "one_time" | "recurring";
 export type Language = "en" | "am" | "ti" | "om" | "so";
 
 export const SUPPORTED_LANGUAGES: Language[] = ["en", "am", "ti", "om", "so"];
@@ -69,10 +70,13 @@ export interface Campaign {
 
 /* ---------- Wizard ---------- */
 
+export type AudienceSource = "manual" | "database";
+
 export interface WizardData {
   name: string;
   sender_id: string;
   // Schedule
+  schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
   frequency: Frequency | "";
@@ -83,12 +87,15 @@ export interface WizardData {
   content: Record<Language, string>;
   default_language: Language;
   // Audience
+  audience_source: AudienceSource;
   recipients: Recipient[];
+  db_query: string;
 }
 
 export const EMPTY_WIZARD: WizardData = {
   name: "",
   sender_id: "",
+  schedule_type: "one_time",
   start_date: "",
   end_date: "",
   frequency: "",
@@ -97,5 +104,7 @@ export const EMPTY_WIZARD: WizardData = {
   end_times: [""],
   content: { en: "", am: "", ti: "", om: "", so: "" },
   default_language: "en",
+  audience_source: "manual",
   recipients: [],
+  db_query: "",
 };

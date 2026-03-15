@@ -90,7 +90,9 @@ export default function CampaignCreate() {
       name: data.name,
       status: "draft",
       sender_id: data.sender_id,
+      channels: ["sms"],
       schedule: {
+        schedule_type: data.schedule_type,
         start_date: data.start_date,
         end_date: data.end_date,
         frequency: data.frequency as any,
@@ -98,6 +100,7 @@ export default function CampaignCreate() {
         send_times: data.send_times,
         end_times: data.end_times,
         is_active: true,
+        status: "pending",
       },
       message_content: {
         content: data.content,

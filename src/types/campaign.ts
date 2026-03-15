@@ -1,7 +1,22 @@
-export type CampaignStatus = "draft" | "active" | "paused" | "completed";
+export type CampaignStatus = "draft" | "active" | "paused" | "completed" | "archived";
 export type Frequency = "daily" | "weekly" | "monthly";
 export type ScheduleType = "one_time" | "recurring";
+export type ScheduleStatus = "pending" | "running" | "stop" | "completed";
+export type Channel = "sms" | "app_notification" | "flash_sms";
 export type Language = "en" | "am" | "ti" | "om" | "so";
+
+export const CHANNEL_LABELS: Record<Channel, string> = {
+  sms: "SMS",
+  app_notification: "App Notification",
+  flash_sms: "Flash SMS",
+};
+
+export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
+  pending: "Pending",
+  running: "Running",
+  stop: "Stopped",
+  completed: "Completed",
+};
 
 export const SUPPORTED_LANGUAGES: Language[] = ["en", "am", "ti", "om", "so"];
 
@@ -35,6 +50,7 @@ export interface Recipient {
 }
 
 export interface Schedule {
+  schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
   frequency: Frequency;
@@ -42,6 +58,18 @@ export interface Schedule {
   send_times: string[];
   end_times: string[];
   is_active: boolean;
+  status: ScheduleStatus;
+}
+
+export interface CampaignProgress {
+  total_messages: number;
+  sent_count: number;
+  failed_count: number;
+  pending_count: number;
+  progress_percent: number;
+  status: "ACTIVE" | "COMPLETED" | "STOPPED" | "FAILED";
+  started_at: string;
+  completed_at: string | null;
 }
 
 export interface MessageContent {
@@ -61,9 +89,11 @@ export interface Campaign {
   name: string;
   status: CampaignStatus;
   sender_id: string;
+  channels: Channel[];
   schedule: Schedule;
   message_content: MessageContent;
   audience: Audience;
+  progress?: CampaignProgress;
   created_at: string;
   updated_at: string;
 }

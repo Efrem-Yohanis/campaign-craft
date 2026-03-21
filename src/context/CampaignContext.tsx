@@ -33,6 +33,9 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       recipients: [
         { msisdn: "+251912345678", lang: "en" },
         { msisdn: "+251911111111", lang: "am" },
+        { msisdn: "+251913333333", lang: "en" },
+        { msisdn: "+251914444444", lang: "ti" },
+        { msisdn: "+251915555555", lang: "om" },
       ],
       total_count: 1428,
       valid_count: 1428,
@@ -79,7 +82,10 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       default_language: "en",
     },
     audience: {
-      recipients: [],
+      recipients: [
+        { msisdn: "+251922222222", lang: "en" },
+        { msisdn: "+251923333333", lang: "am" },
+      ],
       total_count: 342,
       valid_count: 342,
       invalid_count: 0,
@@ -125,7 +131,10 @@ const MOCK_CAMPAIGNS: Campaign[] = [
       default_language: "en",
     },
     audience: {
-      recipients: [],
+      recipients: [
+        { msisdn: "+251931111111", lang: "en" },
+        { msisdn: "+251932222222", lang: "so" },
+      ],
       total_count: 5891,
       valid_count: 5891,
       invalid_count: 0,
@@ -148,6 +157,7 @@ const MOCK_CAMPAIGNS: Campaign[] = [
 interface CampaignContextType {
   campaigns: Campaign[];
   addCampaign: (campaign: Omit<Campaign, "id" | "created_at" | "updated_at">) => void;
+  updateCampaign: (id: string, partial: Partial<Campaign>) => void;
   deleteCampaign: (id: string) => void;
 }
 
@@ -168,12 +178,20 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
+  const updateCampaign = useCallback((id: string, partial: Partial<Campaign>) => {
+    setCampaigns((prev) =>
+      prev.map((c) =>
+        c.id === id ? { ...c, ...partial, updated_at: new Date().toISOString() } : c
+      )
+    );
+  }, []);
+
   const deleteCampaign = useCallback((id: string) => {
     setCampaigns((prev) => prev.filter((c) => c.id !== id));
   }, []);
 
   return (
-    <CampaignContext.Provider value={{ campaigns, addCampaign, deleteCampaign }}>
+    <CampaignContext.Provider value={{ campaigns, addCampaign, updateCampaign, deleteCampaign }}>
       {children}
     </CampaignContext.Provider>
   );

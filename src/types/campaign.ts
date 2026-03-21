@@ -18,6 +18,30 @@ export const SCHEDULE_STATUS_LABELS: Record<ScheduleStatus, string> = {
   completed: "Completed",
 };
 
+export const EXECUTION_STATUS_LABELS: Record<string, string> = {
+  PENDING: "Pending",
+  PROCESSING: "Processing",
+  PAUSED: "Paused",
+  STOPPED: "Stopped",
+  COMPLETED: "Completed",
+  FAILED: "Failed",
+};
+
+export const WINDOW_STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  active: "Active",
+  completed: "Completed",
+  partial: "Partial",
+  skipped: "Skipped",
+};
+
+export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
+  once: "One-time",
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
 export const SUPPORTED_LANGUAGES: Language[] = ["en", "am", "ti", "om", "so"];
 
 export const LANGUAGE_LABELS: Record<Language, string> = {

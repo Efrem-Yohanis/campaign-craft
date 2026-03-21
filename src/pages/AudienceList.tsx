@@ -1,6 +1,5 @@
 import { useCampaigns } from "@/context/CampaignContext";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LANGUAGE_LABELS } from "@/types/campaign";
 import type { Language } from "@/types/campaign";
@@ -19,11 +18,8 @@ export default function AudienceList() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6">
         <h1 className="text-xl font-medium">Audiences</h1>
-        <Link to="/campaigns/new">
-          <Button>Create Campaign with Audience</Button>
-        </Link>
       </div>
 
       <div className="bg-card border rounded-sm overflow-hidden">

@@ -32,9 +32,7 @@ export default function CampaignDetail() {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <p>Campaign not found.</p>
-        <Link to="/" className="text-primary hover:underline mt-2 inline-block">
-          Back to campaigns
-        </Link>
+        <Link to="/" className="text-primary hover:underline mt-2 inline-block">Back to campaigns</Link>
       </div>
     );
   }
@@ -44,7 +42,7 @@ export default function CampaignDetail() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -53,9 +51,7 @@ export default function CampaignDetail() {
           </Button>
           <div>
             <h1 className="text-xl font-semibold">{c.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              Created {new Date(c.created_at).toLocaleDateString()}
-            </p>
+            <p className="text-sm text-muted-foreground">Created {new Date(c.created_at).toLocaleDateString()}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -72,8 +68,24 @@ export default function CampaignDetail() {
       {/* Action Buttons */}
       <CampaignActions campaign={c} onStatusChange={handleStatusChange} />
 
-      {/* Progress */}
-      {c.progress && <ProgressSection progress={c.progress} />}
+      {/* Progress - Enhanced */}
+      {c.progress && (
+        <ProgressSection
+          progress={c.progress}
+          schedule={c.schedule}
+          rounds={c.execution_rounds}
+          campaignName={c.name}
+          senderId={c.sender_id}
+        />
+      )}
+
+      {/* Execution History */}
+      {c.execution_rounds && c.execution_rounds.length > 0 && (
+        <ExecutionHistory
+          rounds={c.execution_rounds}
+          isOneTime={c.schedule.schedule_type === "one_time"}
+        />
+      )}
 
       {/* Campaign Info */}
       <Section icon={Radio} title="Campaign Info">
@@ -98,9 +110,6 @@ export default function CampaignDetail() {
 
       {/* Schedule */}
       <ScheduleSection schedule={c.schedule} />
-
-      {/* Execution History (recurring only) */}
-      <ExecutionHistory schedule={c.schedule} />
 
       {/* Message Content */}
       <MessageSection messageContent={c.message_content} />

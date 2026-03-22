@@ -25,6 +25,7 @@ export const EXECUTION_STATUS_LABELS: Record<string, string> = {
   STOPPED: "Stopped",
   COMPLETED: "Completed",
   FAILED: "Failed",
+  ACTIVE: "Active",
 };
 
 export const WINDOW_STATUS_LABELS: Record<string, string> = {
@@ -88,11 +89,27 @@ export interface Schedule {
 export interface CampaignProgress {
   total_messages: number;
   sent_count: number;
+  delivered_count: number;
   failed_count: number;
+  failed_delivery_count: number;
   pending_count: number;
   progress_percent: number;
-  status: "ACTIVE" | "COMPLETED" | "STOPPED" | "FAILED";
+  status: string;
   started_at: string;
+  completed_at: string | null;
+}
+
+export interface ExecutionRound {
+  round: number;
+  date: string;
+  window: string;
+  status: "completed" | "partial" | "failed" | "pending" | "active";
+  queued: number;
+  sent: number;
+  delivered: number;
+  failed_send: number;
+  failed_delivery: number;
+  started_at: string | null;
   completed_at: string | null;
 }
 
@@ -118,6 +135,7 @@ export interface Campaign {
   message_content: MessageContent;
   audience: Audience;
   progress?: CampaignProgress;
+  execution_rounds?: ExecutionRound[];
   created_at: string;
   updated_at: string;
 }
@@ -129,7 +147,6 @@ export type AudienceSource = "manual" | "database";
 export interface WizardData {
   name: string;
   sender_id: string;
-  // Schedule
   schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
@@ -137,10 +154,8 @@ export interface WizardData {
   run_days: number[];
   send_times: string[];
   end_times: string[];
-  // Messages
   content: Record<Language, string>;
   default_language: Language;
-  // Audience
   audience_source: AudienceSource;
   recipients: Recipient[];
   db_query: string;

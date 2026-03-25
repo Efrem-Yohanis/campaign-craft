@@ -1,10 +1,10 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useCampaigns } from "@/context/CampaignContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Radio } from "lucide-react";
 import type { CampaignStatus, Channel } from "@/types/campaign";
-import { CHANNEL_LABELS } from "@/types/campaign";
+import { CHANNEL_LABELS, SCHEDULE_TYPE_LABELS } from "@/types/campaign";
 
 import { Section, Field } from "@/components/campaign-detail/Section";
 import { ProgressSection } from "@/components/campaign-detail/ProgressSection";
@@ -13,6 +13,7 @@ import { MessageSection } from "@/components/campaign-detail/MessageSection";
 import { AudienceSection } from "@/components/campaign-detail/AudienceSection";
 import { ExecutionHistory } from "@/components/campaign-detail/ExecutionHistory";
 import { CampaignActions } from "@/components/campaign-detail/CampaignActions";
+import { useNavigate } from "react-router-dom";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -43,7 +44,6 @@ export default function CampaignDetail() {
 
   return (
     <div className="space-y-6 w-full">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
@@ -57,7 +57,7 @@ export default function CampaignDetail() {
         <div className="flex items-center gap-2 flex-wrap">
           <Badge className={STATUS_COLORS[c.status]}>{c.status}</Badge>
           <Badge variant="outline" className="capitalize">
-            {c.schedule.schedule_type === "one_time" ? "One-time" : "Recurring"}
+            {SCHEDULE_TYPE_LABELS[c.schedule.schedule_type]}
           </Badge>
           <Link to={`/campaigns/${c.id}/edit`}>
             <Button variant="outline" size="sm">Edit</Button>
@@ -65,10 +65,8 @@ export default function CampaignDetail() {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <CampaignActions campaign={c} onStatusChange={handleStatusChange} />
 
-      {/* Progress - Enhanced */}
       {c.progress && (
         <ProgressSection
           progress={c.progress}
@@ -79,15 +77,13 @@ export default function CampaignDetail() {
         />
       )}
 
-      {/* Execution History */}
       {c.execution_rounds && c.execution_rounds.length > 0 && (
         <ExecutionHistory
           rounds={c.execution_rounds}
-          isOneTime={c.schedule.schedule_type === "one_time"}
+          isOneTime={c.schedule.schedule_type === "once"}
         />
       )}
 
-      {/* Campaign Info */}
       <Section icon={Radio} title="Campaign Info">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
           <Field label="Campaign Name" value={c.name} />
@@ -108,13 +104,8 @@ export default function CampaignDetail() {
         </div>
       </Section>
 
-      {/* Schedule */}
       <ScheduleSection schedule={c.schedule} />
-
-      {/* Message Content */}
       <MessageSection messageContent={c.message_content} />
-
-      {/* Audience */}
       <AudienceSection audience={c.audience} />
     </div>
   );

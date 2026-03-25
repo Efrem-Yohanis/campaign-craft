@@ -9,7 +9,7 @@ interface CampaignActionsProps {
 
 export function CampaignActions({ campaign, onStatusChange }: CampaignActionsProps) {
   const s = campaign.status;
-  const isRecurring = campaign.schedule.schedule_type === "recurring";
+  const isRecurring = campaign.schedule.schedule_type !== "once";
 
   return (
     <div className="flex items-center gap-2 flex-wrap">

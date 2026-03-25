@@ -24,7 +24,7 @@ export default function CampaignCreate() {
   const navigate = useNavigate();
   const { addCampaign } = useCampaigns();
   const [step, setStep] = useState(0);
-  const [data, setData] = useState<WizardData>({ ...EMPTY_WIZARD, content: { ...EMPTY_WIZARD.content } });
+  const [data, setData] = useState<WizardData>({ ...EMPTY_WIZARD, content: { ...EMPTY_WIZARD.content }, time_windows: [...EMPTY_WIZARD.time_windows] });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   function update(partial: Partial<WizardData>) {
@@ -60,15 +60,13 @@ export default function CampaignCreate() {
 
     if (step === 3) {
       if (!data.start_date) errs.start_date = "Start date is required";
-      if (data.schedule_type === "recurring") {
-        if (!data.end_date) errs.end_date = "End date is required";
-        if (data.start_date && data.end_date && data.start_date >= data.end_date) {
-          errs.end_date = "End date must be after start date";
-        }
-        if (!data.frequency) errs.frequency = "Frequency is required";
-        if (data.run_days.length === 0) errs.run_days = "Select at least one run day";
-        const hasTime = data.send_times.some((t) => t.trim()) && data.end_times.some((t) => t.trim());
-        if (!hasTime) errs.send_times = "At least one time window is required";
+      const hasTimeWindow = data.time_windows.some((tw) => tw.start.trim() && tw.end.trim());
+      if (!hasTimeWindow) errs.time_windows = "At least one time window is required";
+      if (data.schedule_type === "weekly" && data.run_days.length === 0) {
+        errs.run_days = "Select at least one run day";
+      }
+      if (data.schedule_type !== "once" && data.end_date && data.start_date && data.start_date >= data.end_date) {
+        errs.end_date = "End date must be after start date";
       }
     }
 
@@ -94,11 +92,11 @@ export default function CampaignCreate() {
       schedule: {
         schedule_type: data.schedule_type,
         start_date: data.start_date,
-        end_date: data.end_date,
-        frequency: data.frequency as any,
-        run_days: data.run_days,
-        send_times: data.send_times,
-        end_times: data.end_times,
+        ...(data.end_date && { end_date: data.end_date }),
+        ...(data.run_days.length > 0 && { run_days: data.run_days }),
+        time_windows: data.time_windows.filter((tw) => tw.start && tw.end),
+        timezone: data.timezone,
+        auto_reset: data.auto_reset,
         is_active: true,
         status: "pending",
       },
@@ -127,7 +125,6 @@ export default function CampaignCreate() {
             const isCurrent = i === step;
             return (
               <div key={i} className="flex-1 flex flex-col items-center relative">
-                {/* Connector line */}
                 {i > 0 && (
                   <div
                     className={cn(
@@ -137,7 +134,6 @@ export default function CampaignCreate() {
                     style={{ zIndex: 0 }}
                   />
                 )}
-                {/* Circle */}
                 <div
                   className={cn(
                     "relative z-10 flex items-center justify-center w-10 h-10 rounded-full border-2 transition-colors",

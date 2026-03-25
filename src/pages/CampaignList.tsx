@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { CampaignStatus } from "@/types/campaign";
+import { SCHEDULE_TYPE_LABELS } from "@/types/campaign";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -43,11 +44,10 @@ export default function CampaignList() {
     return matchesSearch && matchesStatus;
   });
 
-  /* Summary stats */
   const total = campaigns.length;
   const active = campaigns.filter((c) => c.status === "active").length;
-  const oneTime = campaigns.filter((c) => c.schedule?.schedule_type === "one_time").length;
-  const recurring = campaigns.filter((c) => c.schedule?.schedule_type === "recurring").length;
+  const oneTime = campaigns.filter((c) => c.schedule?.schedule_type === "once").length;
+  const recurring = campaigns.filter((c) => c.schedule?.schedule_type !== "once").length;
 
   return (
     <div>
@@ -58,7 +58,6 @@ export default function CampaignList() {
         </Link>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
         <SummaryCard label="Total" value={total} />
         <SummaryCard label="Active" value={active} />
@@ -125,7 +124,7 @@ export default function CampaignList() {
                 </td>
                 <td className="px-4 py-3">
                   <Badge variant="outline" className="text-xs capitalize">
-                    {c.schedule?.schedule_type === "one_time" ? "One-time" : "Recurring"}
+                    {SCHEDULE_TYPE_LABELS[c.schedule?.schedule_type] || c.schedule?.schedule_type}
                   </Badge>
                 </td>
                 <td className="px-4 py-3">{c.sender_id || "—"}</td>
@@ -140,7 +139,7 @@ export default function CampaignList() {
                 </td>
                 <td className="px-4 py-3">{c.audience?.total_count?.toLocaleString() ?? "0"}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {c.schedule?.start_date ? new Date(c.schedule.start_date).toLocaleDateString() : "—"}
+                  {c.schedule?.start_date || "—"}
                 </td>
                 <td className="px-4 py-3 text-right space-x-3">
                   <Link to={`/campaigns/${c.id}`} className="text-sm text-primary hover:underline">View</Link>

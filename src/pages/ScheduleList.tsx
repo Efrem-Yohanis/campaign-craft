@@ -1,7 +1,7 @@
 import { useCampaigns } from "@/context/CampaignContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { FREQUENCY_LABELS, DAY_LABELS } from "@/types/campaign";
+import { SCHEDULE_TYPE_LABELS, DAY_LABELS } from "@/types/campaign";
 
 export default function ScheduleList() {
   const { campaigns } = useCampaigns();
@@ -30,7 +30,7 @@ export default function ScheduleList() {
             <tr className="border-b bg-secondary/50">
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Campaign</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Status</th>
-              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Frequency</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Type</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Run Days</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Start</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">End</th>
@@ -50,15 +50,15 @@ export default function ScheduleList() {
               <tr key={s.campaignId} className="border-b last:border-b-0 hover:bg-secondary/30">
                 <td className="px-4 py-3 font-medium">{s.campaignName}</td>
                 <td className="px-4 py-3 capitalize">{s.status}</td>
-                <td className="px-4 py-3 capitalize">{FREQUENCY_LABELS[s.schedule.frequency] ?? s.schedule.frequency}</td>
+                <td className="px-4 py-3 capitalize">{SCHEDULE_TYPE_LABELS[s.schedule.schedule_type]}</td>
                 <td className="px-4 py-3 text-xs">
-                  {s.schedule.run_days.map((d) => DAY_LABELS[d]?.slice(0, 3)).join(", ") || "—"}
+                  {s.schedule.run_days?.map((d) => DAY_LABELS[d]?.slice(0, 3)).join(", ") || "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {s.schedule.start_date ? new Date(s.schedule.start_date).toLocaleDateString() : "—"}
+                  {s.schedule.start_date || "—"}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {s.schedule.end_date ? new Date(s.schedule.end_date).toLocaleDateString() : "—"}
+                  {s.schedule.end_date || "—"}
                 </td>
                 <td className="px-4 py-3">
                   <span className={s.schedule.is_active ? "text-green-600" : "text-muted-foreground"}>

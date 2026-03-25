@@ -1,6 +1,5 @@
 export type CampaignStatus = "draft" | "active" | "paused" | "completed" | "archived";
-export type Frequency = "daily" | "weekly" | "monthly";
-export type ScheduleType = "one_time" | "recurring";
+export type ScheduleType = "once" | "daily" | "weekly" | "monthly";
 export type ScheduleStatus = "pending" | "running" | "stop" | "completed";
 export type Channel = "sms" | "app_notification" | "flash_sms";
 export type Language = "en" | "am" | "ti" | "om" | "so";
@@ -36,7 +35,7 @@ export const WINDOW_STATUS_LABELS: Record<string, string> = {
   skipped: "Skipped",
 };
 
-export const SCHEDULE_TYPE_LABELS: Record<string, string> = {
+export const SCHEDULE_TYPE_LABELS: Record<ScheduleType, string> = {
   once: "One-time",
   daily: "Daily",
   weekly: "Weekly",
@@ -51,12 +50,6 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   ti: "Tigrinya",
   om: "Afaan Oromoo",
   so: "Somali",
-};
-
-export const FREQUENCY_LABELS: Record<Frequency, string> = {
-  daily: "Daily",
-  weekly: "Weekly",
-  monthly: "Monthly",
 };
 
 export const DAY_LABELS: Record<number, string> = {
@@ -74,14 +67,19 @@ export interface Recipient {
   lang: Language;
 }
 
+export interface TimeWindow {
+  start: string;
+  end: string;
+}
+
 export interface Schedule {
   schedule_type: ScheduleType;
   start_date: string;
-  end_date: string;
-  frequency: Frequency;
-  run_days: number[];
-  send_times: string[];
-  end_times: string[];
+  end_date?: string;
+  run_days?: number[];
+  time_windows: TimeWindow[];
+  timezone: string;
+  auto_reset: boolean;
   is_active: boolean;
   status: ScheduleStatus;
 }
@@ -150,10 +148,10 @@ export interface WizardData {
   schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
-  frequency: Frequency | "";
   run_days: number[];
-  send_times: string[];
-  end_times: string[];
+  time_windows: TimeWindow[];
+  timezone: string;
+  auto_reset: boolean;
   content: Record<Language, string>;
   default_language: Language;
   audience_source: AudienceSource;
@@ -164,13 +162,13 @@ export interface WizardData {
 export const EMPTY_WIZARD: WizardData = {
   name: "",
   sender_id: "",
-  schedule_type: "one_time",
+  schedule_type: "once",
   start_date: "",
   end_date: "",
-  frequency: "",
   run_days: [],
-  send_times: [""],
-  end_times: [""],
+  time_windows: [{ start: "", end: "" }],
+  timezone: "UTC",
+  auto_reset: true,
   content: { en: "", am: "", ti: "", om: "", so: "" },
   default_language: "en",
   audience_source: "manual",

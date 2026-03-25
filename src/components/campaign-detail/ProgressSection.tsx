@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Section } from "./Section";
 import type { CampaignProgress, ExecutionRound, Schedule } from "@/types/campaign";
-import { EXECUTION_STATUS_LABELS } from "@/types/campaign";
+import { EXECUTION_STATUS_LABELS, SCHEDULE_TYPE_LABELS } from "@/types/campaign";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-800",
@@ -84,16 +84,14 @@ interface ProgressSectionProps {
 }
 
 export function ProgressSection({ progress, schedule, rounds, campaignName, senderId }: ProgressSectionProps) {
-  const isRecurring = schedule.schedule_type === "recurring";
+  const isRecurring = schedule.schedule_type !== "once";
   const [selectedRound, setSelectedRound] = useState<string>("current");
 
-  // Compute displayed data based on selected round
   const displayData = useMemo(() => {
     if (!isRecurring || selectedRound === "current" || !rounds) {
       return progress;
     }
     if (selectedRound === "all") {
-      // Aggregate all rounds
       const agg = rounds.reduce(
         (acc, r) => ({
           total_messages: acc.total_messages + r.queued,
@@ -114,7 +112,6 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
         completed_at: rounds[rounds.length - 1]?.completed_at || null,
       };
     }
-    // Specific round
     const roundNum = parseInt(selectedRound);
     const round = rounds.find(r => r.round === roundNum);
     if (!round) return progress;
@@ -146,16 +143,16 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
   };
 
   const d = displayData;
+  const tw = schedule.time_windows?.[0];
 
   return (
     <Section icon={BarChart3} title="Execution Progress">
       <div className="space-y-5">
-        {/* Campaign Type & Round Selector */}
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Campaign Type:</span>
             <Badge variant="outline">
-              {isRecurring ? `🔄 Recurring (${schedule.frequency})` : "📅 One-time"}
+              {isRecurring ? `🔄 ${SCHEDULE_TYPE_LABELS[schedule.schedule_type]}` : "📅 One-time"}
             </Badge>
           </div>
 
@@ -180,13 +177,10 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           )}
         </div>
 
-        {/* Round Info Bar */}
         {selectedRoundData && (
           <div className="bg-secondary/50 border rounded-sm px-4 py-2 text-sm flex items-center gap-3 flex-wrap">
             <span className="font-medium">Round #{selectedRoundData.round}</span>
-            <span className="text-muted-foreground">
-              {new Date(selectedRoundData.date).toLocaleDateString()}
-            </span>
+            <span className="text-muted-foreground">{new Date(selectedRoundData.date).toLocaleDateString()}</span>
             <span className="text-muted-foreground">|</span>
             <span className="text-muted-foreground">Window: {selectedRoundData.window}</span>
             <span className="text-muted-foreground">|</span>
@@ -209,14 +203,12 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           </div>
         )}
 
-        {/* One-time execution info */}
         {!isRecurring && (
           <div className="text-sm text-muted-foreground">
-            Execution Date: {new Date(schedule.start_date).toLocaleDateString()} | Window: {schedule.send_times[0] || "—"} – {schedule.end_times[0] || "—"}
+            Execution Date: {schedule.start_date} | Window: {tw ? `${tw.start} – ${tw.end}` : "—"}
           </div>
         )}
 
-        {/* Status + Progress Bar */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Overall Progress</span>
@@ -230,7 +222,6 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           <Progress value={d.progress_percent} className="h-3" />
         </div>
 
-        {/* Stat Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           <StatCard icon={Mail} label="Total Messages" value={d.total_messages} total={d.total_messages} color="text-foreground" onDownload={() => handleDownload("total")} />
           <StatCard icon={Send} label="Sent" value={d.sent_count} total={d.total_messages} color="text-green-600" onDownload={() => handleDownload("sent")} />
@@ -239,7 +230,6 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           <StatCard icon={Clock} label="Pending" value={d.pending_count} total={d.total_messages} color="text-muted-foreground" onDownload={() => handleDownload("pending")} />
         </div>
 
-        {/* Failed Delivery */}
         {d.failed_delivery_count > 0 && (
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">📊 Failed Delivery:</span>
@@ -252,7 +242,6 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           </div>
         )}
 
-        {/* Timing */}
         <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2 border-t">
           {d.started_at && (
             <span>⏱️ Started: <strong className="text-foreground">{new Date(d.started_at).toLocaleString()}</strong></span>
@@ -265,7 +254,6 @@ export function ProgressSection({ progress, schedule, rounds, campaignName, send
           )}
         </div>
 
-        {/* Success Rates */}
         {d.sent_count > 0 && (
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <TrendingUp className="h-3.5 w-3.5" />

@@ -75,7 +75,6 @@ export interface ApiCampaign {
     schedule_type_display: string;
     campaign_status: string;
     campaign_status_display: string;
-    current_window_status: string;
     current_window_status_display: string;
     upcoming_windows: string;
     schedule_summary: string;

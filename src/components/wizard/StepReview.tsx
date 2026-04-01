@@ -1,5 +1,5 @@
 import type { WizardData } from "@/types/campaign";
-import { LANGUAGE_LABELS, SCHEDULE_TYPE_LABELS, DAY_LABELS } from "@/types/campaign";
+import { LANGUAGE_LABELS, SCHEDULE_TYPE_LABELS, DAY_LABELS, CHANNEL_LABELS } from "@/types/campaign";
 import type { Language } from "@/types/campaign";
 import { Users, CalendarClock, MessageSquare, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

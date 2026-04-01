@@ -50,11 +50,95 @@ export async function createCampaign(data: CreateCampaignPayload) {
   return handleResponse<{ id: number; [key: string]: unknown }>(res);
 }
 
-export async function fetchCampaigns() {
-  const res = await fetch(`${API_BASE}/api/campaigns/`, {
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface ApiCampaign {
+  id: number;
+  name: string;
+  status: string;
+  execution_status: string;
+  execution_status_display: string;
+  sender_id: string;
+  channels: Record<string, string> | string[];
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+  schedule: {
+    id: number;
+    campaign_name: string;
+    schedule_type: string;
+    schedule_type_display: string;
+    campaign_status: string;
+    campaign_status_display: string;
+    current_window_status: string;
+    current_window_status_display: string;
+    upcoming_windows: string;
+    schedule_summary: string;
+    start_date: string;
+    end_date: string | null;
+    run_days: Record<string, string> | number[];
+    time_windows: Record<string, string> | { start: string; end: string }[];
+    timezone: string;
+    current_round: number;
+    current_window_date: string | null;
+    current_window_index: number;
+    current_window_status: string;
+    next_run_date: string | null;
+    next_run_window: number;
+    completed_windows: Record<string, string>;
+    total_windows_completed: number;
+    is_active: boolean;
+    auto_reset: boolean;
+    created_at: string;
+    updated_at: string;
+    last_processed_at: string | null;
+  } | null;
+  message_content: {
+    id: number;
+    languages_available: string;
+    preview: string;
+    content: Record<string, string>;
+    default_language: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  audience: {
+    id: number;
+    summary: string;
+    database_info: string;
+    valid_percentage: string;
+    total_count: number;
+    valid_count: number;
+    invalid_count: number;
+    database_table: string;
+    id_field: string;
+    filter_condition: string;
+    created_at: string;
+    updated_at: string;
+  } | null;
+  progress: string;
+  checkpoint_info: string;
+  provider_stats: string;
+  last_processed_id: number;
+  total_processed: number;
+  can_start: boolean;
+  can_pause: boolean;
+  can_resume: boolean;
+  can_stop: boolean;
+  can_complete: boolean;
+  is_deleted: boolean;
+}
+
+export async function fetchCampaigns(page = 1) {
+  const res = await fetch(`${API_BASE}/api/campaigns/?page=${page}`, {
     headers: authHeaders(),
   });
-  return handleResponse<unknown[]>(res);
+  return handleResponse<PaginatedResponse<ApiCampaign>>(res);
 }
 
 /* -------- Schedule -------- */

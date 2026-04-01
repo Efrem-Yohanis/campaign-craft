@@ -145,6 +145,7 @@ export type AudienceSource = "manual" | "database";
 export interface WizardData {
   name: string;
   sender_id: string;
+  channels: Channel[];
   schedule_type: ScheduleType;
   start_date: string;
   end_date: string;
@@ -162,6 +163,7 @@ export interface WizardData {
 export const EMPTY_WIZARD: WizardData = {
   name: "",
   sender_id: "",
+  channels: ["sms"],
   schedule_type: "once",
   start_date: "",
   end_date: "",

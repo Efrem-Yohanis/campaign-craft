@@ -1,5 +1,5 @@
 import type { WizardData } from "@/types/campaign";
-import { LANGUAGE_LABELS, SCHEDULE_TYPE_LABELS, DAY_LABELS } from "@/types/campaign";
+import { LANGUAGE_LABELS, SCHEDULE_TYPE_LABELS, DAY_LABELS, CHANNEL_LABELS } from "@/types/campaign";
 import type { Language } from "@/types/campaign";
 import { Users, CalendarClock, MessageSquare, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,15 @@ export default function StepReview({ data }: Props) {
           <div>
             <p className="text-xs text-muted-foreground mb-1">Sender ID</p>
             <p className="font-medium text-foreground">{data.sender_id || "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Channels</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {(data.channels || []).map((ch) => (
+                <Badge key={ch} variant="secondary">{CHANNEL_LABELS[ch] || ch}</Badge>
+              ))}
+              {(!data.channels || data.channels.length === 0) && <span className="text-muted-foreground">—</span>}
+            </div>
           </div>
         </div>
       </section>

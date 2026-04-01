@@ -1,5 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import {
   Megaphone,
@@ -33,7 +34,10 @@ const NAV_ITEMS = [
 export default function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { username, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  const initials = username ? username.slice(0, 2).toUpperCase() : "OP";
 
   function isActive(href: string) {
     if (href === "/") return location.pathname === "/" || location.pathname.startsWith("/campaigns");
@@ -113,17 +117,16 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Button variant="ghost" className="flex items-center gap-2 px-2 h-9">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    OP
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-foreground hidden sm:inline">Operator</span>
+                <span className="text-sm font-medium text-foreground hidden sm:inline">{username || "Operator"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-medium">Operator</p>
-                  <p className="text-xs text-muted-foreground">admin@example.com</p>
+                  <p className="text-sm font-medium">{username || "Operator"}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -138,7 +141,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
-                onClick={() => navigate("/login")}
+                onClick={() => { logout(); navigate("/login"); }}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout

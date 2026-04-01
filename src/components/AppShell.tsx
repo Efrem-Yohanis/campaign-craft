@@ -34,7 +34,10 @@ const NAV_ITEMS = [
 export default function AppShell({ children }: { children: ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { username, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+
+  const initials = username ? username.slice(0, 2).toUpperCase() : "OP";
 
   function isActive(href: string) {
     if (href === "/") return location.pathname === "/" || location.pathname.startsWith("/campaigns");

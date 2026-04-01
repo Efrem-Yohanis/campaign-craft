@@ -33,6 +33,15 @@ export default function StepReview({ data }: Props) {
             <p className="text-xs text-muted-foreground mb-1">Sender ID</p>
             <p className="font-medium text-foreground">{data.sender_id || "—"}</p>
           </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Channels</p>
+            <div className="flex gap-1.5 flex-wrap">
+              {(data.channels || []).map((ch) => (
+                <Badge key={ch} variant="secondary">{CHANNEL_LABELS[ch] || ch}</Badge>
+              ))}
+              {(!data.channels || data.channels.length === 0) && <span className="text-muted-foreground">—</span>}
+            </div>
+          </div>
         </div>
       </section>
 

@@ -126,8 +126,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-0.5">
-                  <p className="text-sm font-medium">Operator</p>
-                  <p className="text-xs text-muted-foreground">admin@example.com</p>
+                  <p className="text-sm font-medium">{username || "Operator"}</p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />

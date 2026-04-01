@@ -145,6 +145,7 @@ export type AudienceSource = "manual" | "database";
 export interface WizardData {
   name: string;
   sender_id: string;
+  channels: Channel[];
   schedule_type: ScheduleType;
   start_date: string;
   end_date: string;

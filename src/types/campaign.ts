@@ -163,6 +163,7 @@ export interface WizardData {
 export const EMPTY_WIZARD: WizardData = {
   name: "",
   sender_id: "",
+  channels: ["sms"],
   schedule_type: "once",
   start_date: "",
   end_date: "",

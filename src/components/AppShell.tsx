@@ -117,10 +117,10 @@ export default function AppShell({ children }: { children: ReactNode }) {
               <Button variant="ghost" className="flex items-center gap-2 px-2 h-9">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                    OP
+                    {initials}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium text-foreground hidden sm:inline">Operator</span>
+                <span className="text-sm font-medium text-foreground hidden sm:inline">{username || "Operator"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">

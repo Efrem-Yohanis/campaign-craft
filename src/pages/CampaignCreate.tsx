@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCampaigns } from "@/context/CampaignContext";
 import { Button } from "@/components/ui/button";
 import type { WizardData } from "@/types/campaign";
 import { EMPTY_WIZARD, SUPPORTED_LANGUAGES } from "@/types/campaign";
@@ -11,6 +10,8 @@ import StepSchedule from "@/components/wizard/StepSchedule";
 import StepReview from "@/components/wizard/StepReview";
 import { Check, ClipboardList, Users, MessageSquare, CalendarClock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { createCampaign, createSchedule, updateMessageContent, createAudience } from "@/lib/api";
 
 const STEPS = [
   { label: "Campaign Info", icon: ClipboardList },
@@ -22,10 +23,10 @@ const STEPS = [
 
 export default function CampaignCreate() {
   const navigate = useNavigate();
-  const { addCampaign } = useCampaigns();
   const [step, setStep] = useState(0);
   const [data, setData] = useState<WizardData>({ ...EMPTY_WIZARD, content: { ...EMPTY_WIZARD.content }, time_windows: [...EMPTY_WIZARD.time_windows] });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
 
   function update(partial: Partial<WizardData>) {
     setData((prev) => ({ ...prev, ...partial }));
@@ -37,6 +38,7 @@ export default function CampaignCreate() {
 
     if (step === 0) {
       if (!data.name.trim()) errs.name = "Name is required";
+      if (data.channels.length === 0) errs.channels = "Select at least one channel";
       if (data.sender_id) {
         if (data.sender_id.length < 3 || data.sender_id.length > 11) {
           errs.sender_id = "Sender ID must be 3–11 characters";
@@ -83,35 +85,55 @@ export default function CampaignCreate() {
     if (step > 0) setStep(step - 1);
   }
 
-  function handleSubmit() {
-    addCampaign({
-      name: data.name,
-      status: "draft",
-      sender_id: data.sender_id,
-      channels: ["sms"],
-      schedule: {
+  async function handleSubmit() {
+    setSubmitting(true);
+    try {
+      // 1. Create campaign
+      const campaign = await createCampaign({
+        name: data.name,
+        sender_id: data.sender_id,
+        channels: data.channels,
+        status: "draft",
+      });
+      const campaignId = campaign.id;
+
+      // 2. Add schedule
+      await createSchedule(campaignId, {
         schedule_type: data.schedule_type,
         start_date: data.start_date,
-        ...(data.end_date && { end_date: data.end_date }),
-        ...(data.run_days.length > 0 && { run_days: data.run_days }),
+        ...(data.end_date ? { end_date: data.end_date } : {}),
+        ...(data.run_days.length > 0 ? { run_days: data.run_days } : {}),
         time_windows: data.time_windows.filter((tw) => tw.start && tw.end),
         timezone: data.timezone,
         auto_reset: data.auto_reset,
-        is_active: true,
-        status: "pending",
-      },
-      message_content: {
-        content: data.content,
-        default_language: data.default_language,
-      },
-      audience: {
-        recipients: data.recipients,
-        total_count: data.recipients.length,
-        valid_count: data.recipients.length,
-        invalid_count: 0,
-      },
-    });
-    navigate("/");
+      });
+
+      // 3. Add message content
+      const contentEntries = Object.entries(data.content).filter(([, v]) => v.trim());
+      if (contentEntries.length > 0) {
+        await updateMessageContent(campaignId, {
+          content: Object.fromEntries(contentEntries),
+          default_language: data.default_language,
+        });
+      }
+
+      // 4. Add audience
+      if (data.recipients.length > 0) {
+        await createAudience(campaignId, {
+          recipients: data.recipients.map((r) => ({
+            msisdn: r.msisdn,
+            lang: r.lang,
+          })),
+        });
+      }
+
+      toast.success(`Campaign "${data.name}" created successfully!`);
+      navigate("/");
+    } catch (err: any) {
+      toast.error("Failed to create campaign: " + (err.message || "Unknown error"));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -184,7 +206,9 @@ export default function CampaignCreate() {
           </Button>
 
           {step === 4 ? (
-            <Button onClick={handleSubmit}>Submit Campaign</Button>
+            <Button onClick={handleSubmit} disabled={submitting}>
+              {submitting ? "Submitting…" : "Submit Campaign"}
+            </Button>
           ) : (
             <Button onClick={goNext}>Next →</Button>
           )}

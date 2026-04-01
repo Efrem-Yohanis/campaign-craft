@@ -90,12 +90,23 @@ export default function CampaignList() {
         </Select>
       </div>
 
+      {loading ? (
+        <div className="bg-card border rounded-sm px-4 py-12 text-center text-muted-foreground">
+          Loading campaigns...
+        </div>
+      ) : error ? (
+        <div className="bg-card border rounded-sm px-4 py-12 text-center">
+          <p className="text-destructive mb-2">{error}</p>
+          <Button variant="outline" size="sm" onClick={refetch}>Retry</Button>
+        </div>
+      ) : (
       <div className="bg-card border rounded-sm overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b bg-secondary/50">
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Name</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+              <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Execution</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Type</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Sender</th>
               <th className="text-left px-4 py-3 font-medium text-muted-foreground text-xs uppercase tracking-wider">Channels</th>
@@ -107,7 +118,7 @@ export default function CampaignList() {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">
+                <td colSpan={9} className="px-4 py-12 text-center text-muted-foreground">
                   No campaigns found.
                 </td>
               </tr>
@@ -123,8 +134,13 @@ export default function CampaignList() {
                   <Badge className={`${STATUS_COLORS[c.status]} text-xs`}>{c.status}</Badge>
                 </td>
                 <td className="px-4 py-3">
+                  {c.execution_status_display ? (
+                    <Badge variant="outline" className="text-xs">{c.execution_status_display}</Badge>
+                  ) : "—"}
+                </td>
+                <td className="px-4 py-3">
                   <Badge variant="outline" className="text-xs capitalize">
-                    {SCHEDULE_TYPE_LABELS[c.schedule?.schedule_type] || c.schedule?.schedule_type}
+                    {SCHEDULE_TYPE_LABELS[c.schedule?.schedule_type] || c.schedule?.schedule_type || "—"}
                   </Badge>
                 </td>
                 <td className="px-4 py-3">{c.sender_id || "—"}</td>
@@ -151,6 +167,7 @@ export default function CampaignList() {
           </tbody>
         </table>
       </div>
+      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

@@ -33,7 +33,7 @@ const STATUS_COLORS: Record<CampaignStatus, string> = {
 };
 
 export default function CampaignList() {
-  const { campaigns, deleteCampaign } = useCampaigns();
+  const { campaigns, deleteCampaign, loading, error, refetch } = useCampaigns();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -47,7 +47,7 @@ export default function CampaignList() {
   const total = campaigns.length;
   const active = campaigns.filter((c) => c.status === "active").length;
   const oneTime = campaigns.filter((c) => c.schedule?.schedule_type === "once").length;
-  const recurring = campaigns.filter((c) => c.schedule?.schedule_type !== "once").length;
+  const recurring = campaigns.filter((c) => c.schedule?.schedule_type !== "once" && c.schedule).length;
 
   return (
     <div>

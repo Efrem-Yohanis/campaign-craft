@@ -127,6 +127,8 @@ export interface Campaign {
   id: string;
   name: string;
   status: CampaignStatus;
+  execution_status?: string;
+  execution_status_display?: string;
   sender_id: string;
   channels: Channel[];
   schedule: Schedule;
@@ -134,6 +136,11 @@ export interface Campaign {
   audience: Audience;
   progress?: CampaignProgress;
   execution_rounds?: ExecutionRound[];
+  can_start?: boolean;
+  can_pause?: boolean;
+  can_resume?: boolean;
+  can_stop?: boolean;
+  can_complete?: boolean;
   created_at: string;
   updated_at: string;
 }

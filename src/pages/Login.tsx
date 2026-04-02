@@ -22,7 +22,7 @@ export default function Login() {
     setLoading(true);
     try {
       const data = await login(username, password);
-      setAuth(data.access, username);
+      setAuth(data.access, data.refresh, username);
       toast.success("Logged in successfully");
       navigate("/");
     } catch (err: any) {

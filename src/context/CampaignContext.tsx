@@ -1,9 +1,25 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
-import type { Campaign, CampaignStatus, Schedule, MessageContent, Audience, Language, TimeWindow } from "@/types/campaign";
-import { fetchCampaigns as apiFetchCampaigns, type ApiCampaign } from "@/lib/api";
+import type { Campaign, CampaignStatus, Schedule, MessageContent, Audience, Language, TimeWindow, CampaignProgress } from "@/types/campaign";
+import { fetchCampaigns as apiFetchCampaigns, fetchCampaign as apiFetchCampaign, deleteCampaignApi, type ApiCampaign, type ApiProgress } from "@/lib/api";
+
+function parseProgress(raw: ApiProgress | string | undefined): CampaignProgress | undefined {
+  if (!raw || typeof raw === "string") return undefined;
+  return {
+    total_messages: raw.total_messages ?? 0,
+    sent_count: raw.sent_count ?? 0,
+    delivered_count: raw.delivered_count ?? 0,
+    failed_count: raw.failed_count ?? 0,
+    failed_delivery_count: 0,
+    pending_count: raw.pending_count ?? 0,
+    progress_percent: raw.progress_percent ?? 0,
+    status: raw.status ?? "PENDING",
+    started_at: "",
+    completed_at: null,
+  };
+}
 
 function mapApiCampaign(api: ApiCampaign): Campaign {
-  // Map channels: API may return object or array
+  // Map channels
   let channels: Campaign["channels"] = [];
   if (Array.isArray(api.channels)) {
     channels = api.channels as Campaign["channels"];
@@ -56,11 +72,23 @@ function mapApiCampaign(api: ApiCampaign): Campaign {
   // Map audience
   let audience: Audience | undefined;
   if (api.audience) {
+    const a = api.audience;
+    // Handle both flat fields and summary object
+    let totalCount = 0, validCount = 0, invalidCount = 0;
+    if (typeof a.summary === "object" && a.summary !== null) {
+      totalCount = (a.summary as any).total ?? 0;
+      validCount = (a.summary as any).valid ?? 0;
+      invalidCount = (a.summary as any).invalid ?? 0;
+    } else {
+      totalCount = a.total_count ?? 0;
+      validCount = a.valid_count ?? 0;
+      invalidCount = a.invalid_count ?? 0;
+    }
     audience = {
       recipients: [],
-      total_count: api.audience.total_count || 0,
-      valid_count: api.audience.valid_count || 0,
-      invalid_count: api.audience.invalid_count || 0,
+      total_count: totalCount,
+      valid_count: validCount,
+      invalid_count: invalidCount,
     };
   }
 
@@ -75,6 +103,7 @@ function mapApiCampaign(api: ApiCampaign): Campaign {
     schedule: schedule!,
     message_content: messageContent!,
     audience: audience!,
+    progress: parseProgress(api.progress),
     can_start: api.can_start,
     can_pause: api.can_pause,
     can_resume: api.can_resume,
@@ -93,6 +122,7 @@ interface CampaignContextType {
   page: number;
   setPage: (page: number) => void;
   refetch: () => void;
+  fetchSingleCampaign: (id: string) => Promise<Campaign | null>;
   addCampaign: (campaign: Omit<Campaign, "id" | "created_at" | "updated_at">) => void;
   updateCampaign: (id: string, partial: Partial<Campaign>) => void;
   deleteCampaign: (id: string) => void;
@@ -132,8 +162,16 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     fetchData();
   }, [fetchData]);
 
-  const addCampaign = useCallback((data: Omit<Campaign, "id" | "created_at" | "updated_at">) => {
-    // After API creation, refetch
+  const fetchSingleCampaign = useCallback(async (id: string): Promise<Campaign | null> => {
+    try {
+      const data = await apiFetchCampaign(Number(id));
+      return mapApiCampaign(data);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const addCampaign = useCallback(() => {
     fetchData();
   }, [fetchData]);
 
@@ -143,12 +181,17 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
-  const deleteCampaign = useCallback((id: string) => {
-    setCampaigns((prev) => prev.filter((c) => c.id !== id));
+  const deleteCampaign = useCallback(async (id: string) => {
+    try {
+      await deleteCampaignApi(Number(id));
+      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    } catch {
+      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+    }
   }, []);
 
   return (
-    <CampaignContext.Provider value={{ campaigns, loading, error, totalCount, page, setPage, refetch: fetchData, addCampaign, updateCampaign, deleteCampaign }}>
+    <CampaignContext.Provider value={{ campaigns, loading, error, totalCount, page, setPage, refetch: fetchData, fetchSingleCampaign, addCampaign, updateCampaign, deleteCampaign }}>
       {children}
     </CampaignContext.Provider>
   );

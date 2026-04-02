@@ -1,10 +1,11 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useCampaigns } from "@/context/CampaignContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Radio } from "lucide-react";
-import type { CampaignStatus, Channel } from "@/types/campaign";
+import { ArrowLeft, Radio, Loader2 } from "lucide-react";
+import type { CampaignStatus, Channel, Campaign } from "@/types/campaign";
 import { CHANNEL_LABELS, SCHEDULE_TYPE_LABELS } from "@/types/campaign";
+import { useState, useEffect, useCallback } from "react";
 
 import { Section, Field } from "@/components/campaign-detail/Section";
 import { ProgressSection } from "@/components/campaign-detail/ProgressSection";
@@ -13,7 +14,6 @@ import { MessageSection } from "@/components/campaign-detail/MessageSection";
 import { AudienceSection } from "@/components/campaign-detail/AudienceSection";
 import { ExecutionHistory } from "@/components/campaign-detail/ExecutionHistory";
 import { CampaignActions } from "@/components/campaign-detail/CampaignActions";
-import { useNavigate } from "react-router-dom";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -26,10 +26,42 @@ const STATUS_COLORS: Record<CampaignStatus, string> = {
 export default function CampaignDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { campaigns, updateCampaign } = useCampaigns();
-  const c = campaigns.find((x) => x.id === id);
+  const { campaigns, fetchSingleCampaign, refetch } = useCampaigns();
+  const [campaign, setCampaign] = useState<Campaign | null | undefined>(undefined);
 
-  if (!c) {
+  const loadCampaign = useCallback(async () => {
+    // Try from context first
+    const fromCtx = campaigns.find((x) => x.id === id);
+    if (fromCtx) {
+      setCampaign(fromCtx);
+    }
+    // Always fetch fresh from API
+    if (id) {
+      const fresh = await fetchSingleCampaign(id);
+      if (fresh) setCampaign(fresh);
+      else if (!fromCtx) setCampaign(null);
+    }
+  }, [id, campaigns, fetchSingleCampaign]);
+
+  useEffect(() => {
+    loadCampaign();
+  }, [loadCampaign]);
+
+  const handleActionComplete = useCallback(() => {
+    // Refetch both list and detail
+    refetch();
+    if (id) fetchSingleCampaign(id).then((c) => c && setCampaign(c));
+  }, [id, refetch, fetchSingleCampaign]);
+
+  if (campaign === undefined) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!campaign) {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <p>Campaign not found.</p>
@@ -38,9 +70,7 @@ export default function CampaignDetail() {
     );
   }
 
-  const handleStatusChange = (status: CampaignStatus) => {
-    updateCampaign(c.id, { status });
-  };
+  const c = campaign;
 
   return (
     <div className="space-y-6 w-full">
@@ -56,16 +86,21 @@ export default function CampaignDetail() {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Badge className={STATUS_COLORS[c.status]}>{c.status}</Badge>
-          <Badge variant="outline" className="capitalize">
-            {SCHEDULE_TYPE_LABELS[c.schedule.schedule_type]}
-          </Badge>
+          {c.execution_status_display && (
+            <Badge variant="outline">{c.execution_status_display}</Badge>
+          )}
+          {c.schedule && (
+            <Badge variant="outline" className="capitalize">
+              {SCHEDULE_TYPE_LABELS[c.schedule.schedule_type]}
+            </Badge>
+          )}
           <Link to={`/campaigns/${c.id}/edit`}>
             <Button variant="outline" size="sm">Edit</Button>
           </Link>
         </div>
       </div>
 
-      <CampaignActions campaign={c} onStatusChange={handleStatusChange} />
+      <CampaignActions campaign={c} onActionComplete={handleActionComplete} />
 
       {c.progress && (
         <ProgressSection
@@ -80,7 +115,7 @@ export default function CampaignDetail() {
       {c.execution_rounds && c.execution_rounds.length > 0 && (
         <ExecutionHistory
           rounds={c.execution_rounds}
-          isOneTime={c.schedule.schedule_type === "once"}
+          isOneTime={c.schedule?.schedule_type === "once"}
         />
       )}
 
@@ -104,9 +139,9 @@ export default function CampaignDetail() {
         </div>
       </Section>
 
-      <ScheduleSection schedule={c.schedule} />
-      <MessageSection messageContent={c.message_content} />
-      <AudienceSection audience={c.audience} />
+      {c.schedule && <ScheduleSection schedule={c.schedule} />}
+      {c.message_content && <MessageSection messageContent={c.message_content} />}
+      {c.audience && <AudienceSection audience={c.audience} />}
     </div>
   );
 }

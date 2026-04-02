@@ -1,5 +1,4 @@
 const API_BASE = "http://localhost:8000";
-const CAMPAIGN_ENGINE_BASE = "http://localhost:8001";
 
 function getToken(): string | null {
   return localStorage.getItem("auth_token");
@@ -18,6 +17,7 @@ async function handleResponse<T>(res: Response): Promise<T> {
     const body = await res.text();
     throw new Error(`API error ${res.status}: ${body}`);
   }
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -32,29 +32,32 @@ export async function login(username: string, password: string): Promise<{ acces
   return handleResponse(res);
 }
 
-/* -------- Campaigns -------- */
-
-export interface CreateCampaignPayload {
-  name: string;
-  sender_id: string;
-  channels: string[];
-  status: string;
-}
-
-export async function createCampaign(data: CreateCampaignPayload) {
-  const res = await fetch(`${API_BASE}/api/campaigns/`, {
+export async function refreshToken(refresh: string): Promise<{ access: string }> {
+  const res = await fetch(`${API_BASE}/api/token/refresh/`, {
     method: "POST",
-    headers: authHeaders(),
-    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
   });
-  return handleResponse<{ id: number; [key: string]: unknown }>(res);
+  return handleResponse(res);
 }
+
+/* -------- Campaigns -------- */
 
 export interface PaginatedResponse<T> {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
+}
+
+export interface ApiProgress {
+  total_messages: number;
+  sent_count: number;
+  delivered_count: number;
+  failed_count: number;
+  pending_count: number;
+  progress_percent: number;
+  status: string;
 }
 
 export interface ApiCampaign {
@@ -99,8 +102,8 @@ export interface ApiCampaign {
   } | null;
   message_content: {
     id: number;
-    languages_available: string;
-    preview: string;
+    languages_available: string[] | string;
+    preview: string | { language: string; preview: string } | null;
     content: Record<string, string>;
     default_language: string;
     created_at: string;
@@ -108,9 +111,9 @@ export interface ApiCampaign {
   } | null;
   audience: {
     id: number;
-    summary: string;
-    database_info: string;
-    valid_percentage: string;
+    summary: string | { total: number; valid: number; invalid: number };
+    database_info: string | { table: string; id_field: string; filter: string };
+    valid_percentage: string | number;
     total_count: number;
     valid_count: number;
     invalid_count: number;
@@ -120,9 +123,9 @@ export interface ApiCampaign {
     created_at: string;
     updated_at: string;
   } | null;
-  progress: string;
-  checkpoint_info: string;
-  provider_stats: string;
+  progress: ApiProgress | string;
+  checkpoint_info: Record<string, unknown> | string;
+  provider_stats: Record<string, unknown> | string;
   last_processed_id: number;
   total_processed: number;
   can_start: boolean;
@@ -140,6 +143,104 @@ export async function fetchCampaigns(page = 1) {
   return handleResponse<PaginatedResponse<ApiCampaign>>(res);
 }
 
+export async function fetchCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse<ApiCampaign>(res);
+}
+
+export interface CreateCampaignPayload {
+  name: string;
+  sender_id: string;
+  channels: string[];
+  status: string;
+}
+
+export async function createCampaign(data: CreateCampaignPayload) {
+  const res = await fetch(`${API_BASE}/api/campaigns/`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<{ id: number; [key: string]: unknown }>(res);
+}
+
+export async function updateCampaignApi(id: number, data: Partial<CreateCampaignPayload>) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<ApiCampaign>(res);
+}
+
+export async function deleteCampaignApi(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return handleResponse<void>(res);
+}
+
+export async function softDeleteCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/soft_delete/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ message: string; campaign_id: number }>(res);
+}
+
+/* -------- Campaign Actions -------- */
+
+export async function startCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/start/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
+}
+
+export async function pauseCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/pause/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
+}
+
+export async function resumeCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/resume/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
+}
+
+export async function stopCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/stop/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
+}
+
+export async function completeCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/complete/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
+}
+
+export async function archiveCampaign(id: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${id}/archive/`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
+}
+
 /* -------- Schedule -------- */
 
 export interface SchedulePayload {
@@ -152,6 +253,13 @@ export interface SchedulePayload {
   auto_reset: boolean;
 }
 
+export async function fetchSchedule(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 export async function createSchedule(campaignId: number, data: SchedulePayload) {
   const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
     method: "POST",
@@ -161,6 +269,23 @@ export async function createSchedule(campaignId: number, data: SchedulePayload) 
   return handleResponse(res);
 }
 
+export async function updateSchedule(campaignId: number, data: Partial<SchedulePayload>) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+    method: "PATCH",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteSchedule(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return handleResponse<void>(res);
+}
+
 /* -------- Message Content -------- */
 
 export interface MessageContentPayload {
@@ -168,9 +293,25 @@ export interface MessageContentPayload {
   default_language: string;
 }
 
+export async function fetchMessageContent(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 export async function updateMessageContent(campaignId: number, data: MessageContentPayload) {
   const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
     method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
+
+export async function patchMessageContent(campaignId: number, data: Partial<MessageContentPayload>) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
+    method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
   });
@@ -183,6 +324,13 @@ export interface AudiencePayload {
   recipients: { msisdn: string; lang: string; variables?: Record<string, string> }[];
 }
 
+export async function fetchAudience(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
 export async function createAudience(campaignId: number, data: AudiencePayload) {
   const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
     method: "POST",
@@ -192,13 +340,71 @@ export async function createAudience(campaignId: number, data: AudiencePayload) 
   return handleResponse(res);
 }
 
-/* -------- Start Campaign -------- */
+export async function updateAudience(campaignId: number, data: AudiencePayload) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse(res);
+}
 
-export async function startCampaign(campaignId: number, reason?: string) {
-  const res = await fetch(`${CAMPAIGN_ENGINE_BASE}/campaign/start`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ campaign_id: campaignId, reason: reason || "Started from UI" }),
+export async function deleteAudience(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  return handleResponse<void>(res);
+}
+
+/* -------- Progress & Batches -------- */
+
+export async function fetchCampaignProgress(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/progress/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse<{
+    campaign_id: number;
+    campaign_name: string;
+    progress: ApiProgress;
+    batches: { total_batches: number; completed_batches: number; failed_batches: number; in_progress_batches: number };
+  }>(res);
+}
+
+export async function fetchCampaignBatches(campaignId: number, status?: string) {
+  const params = status ? `?status=${status}` : "";
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/batches/${params}`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function fetchCampaignCheckpoint(campaignId: number) {
+  const res = await fetch(`${API_BASE}/api/campaigns/${campaignId}/checkpoint/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+/* -------- Utility -------- */
+
+export async function fetchChannelChoices() {
+  const res = await fetch(`${API_BASE}/api/campaigns/channel-choices/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse<{ value: string; display: string }[]>(res);
+}
+
+export async function fetchExecutionStatusChoices() {
+  const res = await fetch(`${API_BASE}/api/campaigns/execution-status-choices/`, {
+    headers: authHeaders(),
+  });
+  return handleResponse<{ value: string; display: string }[]>(res);
+}
+
+export async function fetchCampaignSummary() {
+  const res = await fetch(`${API_BASE}/api/campaigns/summary/`, {
+    headers: authHeaders(),
   });
   return handleResponse(res);
 }

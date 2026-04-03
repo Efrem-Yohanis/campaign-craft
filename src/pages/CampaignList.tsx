@@ -33,7 +33,9 @@ const STATUS_COLORS: Record<CampaignStatus, string> = {
 };
 
 export default function CampaignList() {
-  const { campaigns, deleteCampaign, loading, error, refetch } = useCampaigns();
+  const { campaigns, deleteCampaign, loading, error, refetch, totalCount, page, setPage } = useCampaigns();
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -167,6 +169,32 @@ export default function CampaignList() {
           </tbody>
         </table>
       </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Page {page} of {totalPages} · {totalCount} campaigns
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage(page - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
       )}
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>

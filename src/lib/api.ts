@@ -4,6 +4,20 @@ function getToken(): string | null {
   return localStorage.getItem("auth_token");
 }
 
+function getRefreshToken(): string | null {
+  return localStorage.getItem("auth_refresh_token");
+}
+
+function setToken(token: string) {
+  localStorage.setItem("auth_token", token);
+}
+
+function clearAuth() {
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("auth_refresh_token");
+  localStorage.removeItem("auth_username");
+}
+
 function authHeaders(): Record<string, string> {
   const token = getToken();
   return {
@@ -19,6 +33,50 @@ async function handleResponse<T>(res: Response): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json();
+}
+
+/* -------- Auto-refresh wrapper -------- */
+
+let refreshPromise: Promise<string> | null = null;
+
+async function doRefresh(): Promise<string> {
+  const refresh = getRefreshToken();
+  if (!refresh) {
+    clearAuth();
+    window.location.href = "/login";
+    throw new Error("No refresh token available");
+  }
+  const res = await fetch(`${API_BASE}/api/token/refresh/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh }),
+  });
+  if (!res.ok) {
+    clearAuth();
+    window.location.href = "/login";
+    throw new Error("Session expired. Please log in again.");
+  }
+  const data = await res.json();
+  setToken(data.access);
+  return data.access;
+}
+
+/**
+ * Fetch with automatic 401 retry: if a request fails with 401,
+ * refresh the access token once and retry the original request.
+ */
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const res = await fetch(url, { ...options, headers: authHeaders() });
+  if (res.status !== 401) return res;
+
+  // Deduplicate concurrent refresh calls
+  if (!refreshPromise) {
+    refreshPromise = doRefresh().finally(() => { refreshPromise = null; });
+  }
+  await refreshPromise;
+
+  // Retry with new token
+  return fetch(url, { ...options, headers: authHeaders() });
 }
 
 /* -------- Auth -------- */

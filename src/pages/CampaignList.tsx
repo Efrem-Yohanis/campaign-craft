@@ -33,7 +33,9 @@ const STATUS_COLORS: Record<CampaignStatus, string> = {
 };
 
 export default function CampaignList() {
-  const { campaigns, deleteCampaign, loading, error, refetch } = useCampaigns();
+  const { campaigns, deleteCampaign, loading, error, refetch, totalCount, page, setPage } = useCampaigns();
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
   const [deleteId, setDeleteId] = useState<string | null>(null);

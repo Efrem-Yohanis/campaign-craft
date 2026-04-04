@@ -36,7 +36,8 @@ const App = () => (
                 <CampaignProvider>
                   <AppShell>
                     <Routes>
-                      <Route path="/" element={<CampaignList />} />
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/campaigns" element={<CampaignList />} />
                       <Route path="/campaigns/new" element={<CampaignCreate />} />
                       <Route path="/campaigns/:id" element={<CampaignDetail />} />
                       <Route path="/campaigns/:id/edit" element={<CampaignCreate />} />

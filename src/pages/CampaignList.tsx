@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { CampaignStatus } from "@/types/campaign";
 import { SCHEDULE_TYPE_LABELS } from "@/types/campaign";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -93,8 +94,33 @@ export default function CampaignList() {
       </div>
 
       {loading ? (
-        <div className="bg-card border rounded-sm px-4 py-12 text-center text-muted-foreground">
-          Loading campaigns...
+        <div className="bg-card border rounded-sm overflow-hidden">
+          <div className="border-b bg-secondary/50 px-4 py-3">
+            <div className="grid grid-cols-9 gap-4">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <Skeleton key={i} className="h-3 w-16" />
+              ))}
+            </div>
+          </div>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="border-b last:border-b-0 px-4 py-3">
+              <div className="grid grid-cols-9 gap-4 items-center">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-5 w-14 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-14 rounded-full" />
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-5 w-10 rounded-full" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-20" />
+                <div className="flex gap-2 justify-end">
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-4 w-8" />
+                  <Skeleton className="h-4 w-10" />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : error ? (
         <div className="bg-card border rounded-sm px-4 py-12 text-center">

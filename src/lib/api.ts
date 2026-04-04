@@ -194,8 +194,8 @@ export interface ApiCampaign {
   is_deleted: boolean;
 }
 
-export async function fetchCampaigns(page = 1) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/?page=${page}`, {
+export async function fetchCampaigns(page = 1, pageSize = 10) {
+  const res = await authFetch(`${API_BASE}/api/campaigns/?page=${page}&page_size=${pageSize}`, {
     headers: authHeaders(),
   });
   return handleResponse<PaginatedResponse<ApiCampaign>>(res);

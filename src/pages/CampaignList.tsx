@@ -34,8 +34,7 @@ const STATUS_COLORS: Record<CampaignStatus, string> = {
 };
 
 export default function CampaignList() {
-  const { campaigns, deleteCampaign, loading, error, refetch, totalCount, page, setPage } = useCampaigns();
-  const pageSize = 10;
+  const { campaigns, deleteCampaign, loading, error, refetch, totalCount, page, setPage, pageSize, setPageSize } = useCampaigns();
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<CampaignStatus | "all">("all");
@@ -199,9 +198,21 @@ export default function CampaignList() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages} · {totalCount} campaigns
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              Page {page} of {totalPages} · {totalCount} campaigns
+            </p>
+            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
+              <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10 / page</SelectItem>
+                <SelectItem value="25">25 / page</SelectItem>
+                <SelectItem value="50">50 / page</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"

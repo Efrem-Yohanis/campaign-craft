@@ -199,7 +199,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <CampaignContext.Provider value={{ campaigns, loading, error, totalCount, page, setPage, refetch: fetchData, fetchSingleCampaign, addCampaign, updateCampaign, deleteCampaign }}>
+    <CampaignContext.Provider value={{ campaigns, loading, error, totalCount, page, setPage, pageSize, setPageSize, refetch: fetchData, fetchSingleCampaign, addCampaign, updateCampaign, deleteCampaign }}>
       {children}
     </CampaignContext.Provider>
   );

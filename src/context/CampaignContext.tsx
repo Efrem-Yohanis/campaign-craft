@@ -121,6 +121,8 @@ interface CampaignContextType {
   totalCount: number;
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   refetch: () => void;
   fetchSingleCampaign: (id: string) => Promise<Campaign | null>;
   addCampaign: (campaign: Omit<Campaign, "id" | "created_at" | "updated_at">) => void;
@@ -136,6 +138,12 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSizeState] = useState(10);
+
+  const setPageSize = useCallback((size: number) => {
+    setPageSizeState(size);
+    setPage(1);
+  }, []);
 
   const fetchData = useCallback(async () => {
     const token = localStorage.getItem("auth_token");
@@ -147,7 +155,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetchCampaigns(page);
+      const data = await apiFetchCampaigns(page, pageSize);
       setCampaigns(data.results.map(mapApiCampaign));
       setTotalCount(data.count);
     } catch (e: any) {
@@ -156,7 +164,7 @@ export function CampaignProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, pageSize]);
 
   useEffect(() => {
     fetchData();

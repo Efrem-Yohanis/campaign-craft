@@ -128,7 +128,7 @@ export default function CampaignCreate() {
       }
 
       toast.success(`Campaign "${data.name}" created successfully!`);
-      navigate("/");
+      navigate("/campaigns");
     } catch (err: any) {
       toast.error("Failed to create campaign: " + (err.message || "Unknown error"));
     } finally {

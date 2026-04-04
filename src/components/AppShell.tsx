@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import {
+  LayoutDashboard,
   Megaphone,
   Users,
   CalendarClock,
@@ -25,7 +26,8 @@ import {
 import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
-  { label: "Campaigns", href: "/", icon: Megaphone },
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Campaigns", href: "/campaigns", icon: Megaphone },
   { label: "Audiences", href: "/audiences", icon: Users },
   { label: "Schedules", href: "/schedules", icon: CalendarClock },
   { label: "Messages", href: "/messages", icon: MessageSquareText },

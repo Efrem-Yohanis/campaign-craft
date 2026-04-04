@@ -128,7 +128,7 @@ export default function CampaignCreate() {
       }
 
       toast.success(`Campaign "${data.name}" created successfully!`);
-      navigate("/");
+      navigate("/campaigns");
     } catch (err: any) {
       toast.error("Failed to create campaign: " + (err.message || "Unknown error"));
     } finally {
@@ -200,7 +200,7 @@ export default function CampaignCreate() {
         <div className="px-6 py-4 border-t flex justify-between">
           <Button
             variant="outline"
-            onClick={step === 0 ? () => navigate("/") : goBack}
+            onClick={step === 0 ? () => navigate("/campaigns") : goBack}
           >
             {step === 0 ? "Cancel" : "← Back"}
           </Button>

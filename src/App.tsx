@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/context/AuthContext";
 import { CampaignProvider } from "@/context/CampaignContext";
 import AppShell from "@/components/AppShell";
+import Dashboard from "@/pages/Dashboard";
 import CampaignList from "@/pages/CampaignList";
 import CampaignDetail from "@/pages/CampaignDetail";
 import CampaignCreate from "@/pages/CampaignCreate";
@@ -35,7 +36,8 @@ const App = () => (
                 <CampaignProvider>
                   <AppShell>
                     <Routes>
-                      <Route path="/" element={<CampaignList />} />
+                      <Route path="/" element={<Dashboard />} />
+                      <Route path="/campaigns" element={<CampaignList />} />
                       <Route path="/campaigns/new" element={<CampaignCreate />} />
                       <Route path="/campaigns/:id" element={<CampaignDetail />} />
                       <Route path="/campaigns/:id/edit" element={<CampaignCreate />} />

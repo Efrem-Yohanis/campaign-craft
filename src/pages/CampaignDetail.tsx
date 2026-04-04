@@ -65,7 +65,7 @@ export default function CampaignDetail() {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <p>Campaign not found.</p>
-        <Link to="/" className="text-primary hover:underline mt-2 inline-block">Back to campaigns</Link>
+        <Link to="/campaigns" className="text-primary hover:underline mt-2 inline-block">Back to campaigns</Link>
       </div>
     );
   }
@@ -76,7 +76,7 @@ export default function CampaignDetail() {
     <div className="space-y-6 w-full">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/campaigns")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>

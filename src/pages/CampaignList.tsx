@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { CampaignStatus } from "@/types/campaign";
 import { SCHEDULE_TYPE_LABELS } from "@/types/campaign";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
   draft: "bg-muted text-muted-foreground",

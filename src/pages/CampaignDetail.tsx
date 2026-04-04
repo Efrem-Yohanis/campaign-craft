@@ -65,7 +65,7 @@ export default function CampaignDetail() {
     return (
       <div className="text-center py-20 text-muted-foreground">
         <p>Campaign not found.</p>
-        <Link to="/" className="text-primary hover:underline mt-2 inline-block">Back to campaigns</Link>
+        <Link to="/campaigns" className="text-primary hover:underline mt-2 inline-block">Back to campaigns</Link>
       </div>
     );
   }

@@ -11,19 +11,22 @@ import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
+import {
+  TrendingUp, Zap, CheckCircle2, Users, Plus, ArrowRight,
+} from "lucide-react";
 
 const STATUS_COLORS: Record<CampaignStatus, string> = {
-  draft: "hsl(var(--muted-foreground))",
-  active: "hsl(142 71% 45%)",
-  paused: "hsl(48 96% 53%)",
-  completed: "hsl(217 91% 60%)",
-  archived: "hsl(var(--secondary-foreground))",
+  draft: "hsl(220 10% 60%)",
+  active: "hsl(152 60% 45%)",
+  paused: "hsl(40 90% 50%)",
+  completed: "hsl(220 72% 50%)",
+  archived: "hsl(220 10% 75%)",
 };
 
 const CHANNEL_COLORS: Record<Channel, string> = {
-  sms: "hsl(217 91% 60%)",
-  app_notification: "hsl(142 71% 45%)",
-  flash_sms: "hsl(280 67% 55%)",
+  sms: "hsl(220 72% 50%)",
+  app_notification: "hsl(152 60% 45%)",
+  flash_sms: "hsl(270 60% 55%)",
 };
 
 export default function Dashboard() {
@@ -43,7 +46,7 @@ export default function Dashboard() {
     return Object.entries(counts).map(([ch, count]) => ({
       name: CHANNEL_LABELS[ch as Channel] ?? ch,
       count,
-      fill: CHANNEL_COLORS[ch as Channel] ?? "hsl(var(--primary))",
+      fill: CHANNEL_COLORS[ch as Channel] ?? "hsl(220 72% 50%)",
     }));
   }, [campaigns]);
 
@@ -71,16 +74,24 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div>
-        <h1 className="text-xl font-medium mb-6">Dashboard</h1>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-10 w-36 rounded-lg" />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="pt-6"><Skeleton className="h-4 w-20 mb-2" /><Skeleton className="h-7 w-12" /></CardContent></Card>
+            <Card key={i} className="shadow-soft">
+              <CardContent className="pt-6">
+                <Skeleton className="h-4 w-20 mb-3" />
+                <Skeleton className="h-8 w-16" />
+              </CardContent>
+            </Card>
           ))}
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}><CardContent className="pt-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+            <Card key={i} className="shadow-soft"><CardContent className="pt-6"><Skeleton className="h-56 w-full rounded-lg" /></CardContent></Card>
           ))}
         </div>
       </div>
@@ -88,69 +99,82 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-medium">Dashboard</h1>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">Overview of your campaign performance</p>
+        </div>
         <Link to="/campaigns/new">
-          <Button>Create campaign</Button>
+          <Button className="gap-2 shadow-soft">
+            <Plus className="h-4 w-4" />
+            Create campaign
+          </Button>
         </Link>
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-        <KPICard label="Total Campaigns" value={total} />
-        <KPICard label="Active" value={active} accent />
-        <KPICard label="Completed" value={completedCount} />
-        <KPICard label="Total Recipients" value={totalRecipients.toLocaleString()} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+        <KPICard icon={TrendingUp} label="Total Campaigns" value={total} />
+        <KPICard icon={Zap} label="Active" value={active} accent />
+        <KPICard icon={CheckCircle2} label="Completed" value={completedCount} />
+        <KPICard icon={Users} label="Total Recipients" value={totalRecipients.toLocaleString()} />
       </div>
 
       {total === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center text-muted-foreground">
-            <p className="mb-3">No campaigns yet. Create your first campaign to see analytics here.</p>
-            <Link to="/campaigns/new"><Button>Create campaign</Button></Link>
+        <Card className="shadow-card">
+          <CardContent className="py-20 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+              <TrendingUp className="h-7 w-7 text-primary" />
+            </div>
+            <p className="text-muted-foreground mb-4">No campaigns yet. Create your first campaign to see analytics.</p>
+            <Link to="/campaigns/new">
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create campaign
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* Charts row */}
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
-            {/* Status distribution */}
-            <Card>
+          {/* Charts */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card className="shadow-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Status Distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={240}>
+                <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
-                    <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} innerRadius={40} paddingAngle={2} label={({ name, value }) => `${name}: ${value}`}>
+                    <Pie data={statusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={85} innerRadius={50} paddingAngle={3} strokeWidth={0} label={({ name, value }) => `${name}: ${value}`}>
                       {statusData.map((entry, i) => (
                         <Cell key={i} fill={entry.fill} />
                       ))}
                     </Pie>
-                    <Tooltip />
+                    <Tooltip contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(220 13% 91%)", boxShadow: "var(--shadow-md)" }} />
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
               </CardContent>
             </Card>
 
-            {/* Channel breakdown */}
-            <Card>
+            <Card className="shadow-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Channel Breakdown</CardTitle>
               </CardHeader>
               <CardContent>
                 {channelData.length === 0 ? (
-                  <div className="h-[240px] flex items-center justify-center text-muted-foreground text-sm">No channel data</div>
+                  <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">No channel data</div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={240}>
+                  <ResponsiveContainer width="100%" height={260}>
                     <BarChart data={channelData}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                      <Tooltip />
-                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 91%)" />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+                      <Tooltip contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(220 13% 91%)", boxShadow: "var(--shadow-md)" }} />
+                      <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                         {channelData.map((entry, i) => (
                           <Cell key={i} fill={entry.fill} />
                         ))}
@@ -162,45 +186,46 @@ export default function Dashboard() {
             </Card>
           </div>
 
-          {/* Schedule types + Recent campaigns */}
+          {/* Schedule + Recent */}
           <div className="grid md:grid-cols-2 gap-6">
-            {/* Schedule types */}
-            <Card>
+            <Card className="shadow-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Schedule Types</CardTitle>
               </CardHeader>
               <CardContent>
                 {scheduleData.length === 0 ? (
-                  <div className="h-[200px] flex items-center justify-center text-muted-foreground text-sm">No schedule data</div>
+                  <div className="h-[220px] flex items-center justify-center text-muted-foreground text-sm">No schedule data</div>
                 ) : (
-                  <ResponsiveContainer width="100%" height={200}>
+                  <ResponsiveContainer width="100%" height={220}>
                     <BarChart data={scheduleData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} className="fill-muted-foreground" />
-                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} className="fill-muted-foreground" />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 13% 91%)" />
+                      <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} stroke="hsl(220 10% 46%)" />
+                      <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} stroke="hsl(220 10% 46%)" />
+                      <Tooltip contentStyle={{ borderRadius: "0.5rem", border: "1px solid hsl(220 13% 91%)", boxShadow: "var(--shadow-md)" }} />
+                      <Bar dataKey="count" fill="hsl(220 72% 50%)" radius={[0, 6, 6, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 )}
               </CardContent>
             </Card>
 
-            {/* Recent campaigns */}
-            <Card>
-              <CardHeader className="pb-2">
+            <Card className="shadow-card">
+              <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Recent Campaigns</CardTitle>
+                <Link to="/campaigns" className="text-xs text-primary hover:underline flex items-center gap-1">
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-1">
                   {recentCampaigns.map((c) => (
-                    <Link key={c.id} to={`/campaigns/${c.id}`} className="flex items-center justify-between py-1.5 hover:bg-secondary/30 rounded px-2 -mx-2 transition-colors">
+                    <Link key={c.id} to={`/campaigns/${c.id}`} className="flex items-center justify-between py-2.5 hover:bg-accent rounded-lg px-3 -mx-3 transition-colors">
                       <span className="text-sm font-medium truncate mr-3">{c.name}</span>
                       <Badge variant="secondary" className="text-xs capitalize shrink-0">{c.status}</Badge>
                     </Link>
                   ))}
                   {recentCampaigns.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-4">No campaigns</p>
+                    <p className="text-sm text-muted-foreground text-center py-6">No campaigns</p>
                   )}
                 </div>
               </CardContent>
@@ -212,12 +237,17 @@ export default function Dashboard() {
   );
 }
 
-function KPICard({ label, value, accent }: { label: string; value: number | string; accent?: boolean }) {
+function KPICard({ icon: Icon, label, value, accent }: { icon: React.ComponentType<{ className?: string }>; label: string; value: number | string; accent?: boolean }) {
   return (
-    <Card>
-      <CardContent className="pt-5 pb-4">
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
-        <p className={`text-2xl font-semibold ${accent ? "text-primary" : ""}`}>{value}</p>
+    <Card className="shadow-card hover:shadow-elevated transition-shadow">
+      <CardContent className="pt-5 pb-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${accent ? "bg-primary/10" : "bg-muted"}`}>
+            <Icon className={`h-4 w-4 ${accent ? "text-primary" : "text-muted-foreground"}`} />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+        <p className={`text-2xl font-bold tracking-tight ${accent ? "text-primary" : ""}`}>{value}</p>
       </CardContent>
     </Card>
   );

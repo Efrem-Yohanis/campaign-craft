@@ -1,88 +1,21 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+// Re-export base utilities so existing imports from "@/lib/api" still work
+export { API_BASE, authHeaders, authFetch, handleResponse } from "./api/base";
+export type { PaginatedResponse } from "./api/base";
 
-function getToken(): string | null {
-  return localStorage.getItem("auth_token");
-}
+// Re-export standalone resource APIs
+export * from "./api/audiences";
+export * from "./api/schedules";
+export * from "./api/messages";
 
-function getRefreshToken(): string | null {
-  return localStorage.getItem("auth_refresh_token");
-}
+const API_BASE_LOCAL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
 
-function setToken(token: string) {
-  localStorage.setItem("auth_token", token);
-}
-
-function clearAuth() {
-  localStorage.removeItem("auth_token");
-  localStorage.removeItem("auth_refresh_token");
-  localStorage.removeItem("auth_username");
-}
-
-function authHeaders(): Record<string, string> {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`API error ${res.status}: ${body}`);
-  }
-  if (res.status === 204) return undefined as T;
-  return res.json();
-}
-
-/* -------- Auto-refresh wrapper -------- */
-
-let refreshPromise: Promise<string> | null = null;
-
-async function doRefresh(): Promise<string> {
-  const refresh = getRefreshToken();
-  if (!refresh) {
-    clearAuth();
-    window.location.href = "/login";
-    throw new Error("No refresh token available");
-  }
-  const res = await fetch(`${API_BASE}/api/token/refresh/`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refresh }),
-  });
-  if (!res.ok) {
-    clearAuth();
-    window.location.href = "/login";
-    throw new Error("Session expired. Please log in again.");
-  }
-  const data = await res.json();
-  setToken(data.access);
-  return data.access;
-}
-
-/**
- * Fetch with automatic 401 retry: if a request fails with 401,
- * refresh the access token once and retry the original request.
- */
-async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const res = await fetch(url, { ...options, headers: authHeaders() });
-  if (res.status !== 401) return res;
-
-  // Deduplicate concurrent refresh calls
-  if (!refreshPromise) {
-    refreshPromise = doRefresh().finally(() => { refreshPromise = null; });
-  }
-  await refreshPromise;
-
-  // Retry with new token
-  return fetch(url, { ...options, headers: authHeaders() });
-}
+// Keep local imports for functions that use the module-level variable
+import { authFetch, authHeaders, handleResponse } from "./api/base";
 
 /* -------- Auth -------- */
 
 export async function login(username: string, password: string): Promise<{ access: string; refresh: string }> {
-  const res = await fetch(`${API_BASE}/api/token/`, {
+  const res = await fetch(`${API_BASE_LOCAL}/api/token/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -91,7 +24,7 @@ export async function login(username: string, password: string): Promise<{ acces
 }
 
 export async function refreshToken(refresh: string): Promise<{ access: string }> {
-  const res = await fetch(`${API_BASE}/api/token/refresh/`, {
+  const res = await fetch(`${API_BASE_LOCAL}/api/token/refresh/`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh }),
@@ -100,13 +33,6 @@ export async function refreshToken(refresh: string): Promise<{ access: string }>
 }
 
 /* -------- Campaigns -------- */
-
-export interface PaginatedResponse<T> {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: T[];
-}
 
 export interface ApiProgress {
   total_messages: number;
@@ -195,16 +121,14 @@ export interface ApiCampaign {
 }
 
 export async function fetchCampaigns(page = 1, pageSize = 10) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/?page=${page}&page_size=${pageSize}`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/?page=${page}&page_size=${pageSize}`, {
     headers: authHeaders(),
   });
-  return handleResponse<PaginatedResponse<ApiCampaign>>(res);
+  return handleResponse<import("./api/base").PaginatedResponse<ApiCampaign>>(res);
 }
 
 export async function fetchCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/`, { headers: authHeaders() });
   return handleResponse<ApiCampaign>(res);
 }
 
@@ -216,7 +140,7 @@ export interface CreateCampaignPayload {
 }
 
 export async function createCampaign(data: CreateCampaignPayload) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -225,7 +149,7 @@ export async function createCampaign(data: CreateCampaignPayload) {
 }
 
 export async function updateCampaignApi(id: number, data: Partial<CreateCampaignPayload>) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -234,7 +158,7 @@ export async function updateCampaignApi(id: number, data: Partial<CreateCampaign
 }
 
 export async function deleteCampaignApi(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -242,7 +166,7 @@ export async function deleteCampaignApi(id: number) {
 }
 
 export async function softDeleteCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/soft_delete/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/soft_delete/`, {
     method: "POST",
     headers: authHeaders(),
   });
@@ -252,54 +176,36 @@ export async function softDeleteCampaign(id: number) {
 /* -------- Campaign Actions -------- */
 
 export async function startCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/start/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/start/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
 }
 
 export async function pauseCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/pause/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/pause/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
 }
 
 export async function resumeCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/resume/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/resume/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
 }
 
 export async function stopCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/stop/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/stop/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
 }
 
 export async function completeCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/complete/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/complete/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; execution_status: string; message: string; campaign_id: number }>(res);
 }
 
 export async function archiveCampaign(id: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${id}/archive/`, {
-    method: "POST",
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${id}/archive/`, { method: "POST", headers: authHeaders() });
   return handleResponse<{ status: string; message: string; campaign_id: number }>(res);
 }
 
-/* -------- Schedule -------- */
+/* -------- Schedule (campaign-nested) -------- */
 
 export interface SchedulePayload {
   schedule_type: string;
@@ -312,14 +218,12 @@ export interface SchedulePayload {
 }
 
 export async function fetchSchedule(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/schedule/`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function createSchedule(campaignId: number, data: SchedulePayload) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/schedule/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -328,7 +232,7 @@ export async function createSchedule(campaignId: number, data: SchedulePayload) 
 }
 
 export async function updateSchedule(campaignId: number, data: Partial<SchedulePayload>) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/schedule/`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -337,14 +241,14 @@ export async function updateSchedule(campaignId: number, data: Partial<ScheduleP
 }
 
 export async function deleteSchedule(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/schedule/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/schedule/`, {
     method: "DELETE",
     headers: authHeaders(),
   });
   return handleResponse<void>(res);
 }
 
-/* -------- Message Content -------- */
+/* -------- Message Content (campaign-nested) -------- */
 
 export interface MessageContentPayload {
   content: Record<string, string>;
@@ -352,14 +256,12 @@ export interface MessageContentPayload {
 }
 
 export async function fetchMessageContent(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/message-content/`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function updateMessageContent(campaignId: number, data: MessageContentPayload) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/message-content/`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -368,7 +270,7 @@ export async function updateMessageContent(campaignId: number, data: MessageCont
 }
 
 export async function patchMessageContent(campaignId: number, data: Partial<MessageContentPayload>) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/message-content/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/message-content/`, {
     method: "PATCH",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -376,21 +278,19 @@ export async function patchMessageContent(campaignId: number, data: Partial<Mess
   return handleResponse(res);
 }
 
-/* -------- Audience -------- */
+/* -------- Audience (campaign-nested) -------- */
 
 export interface AudiencePayload {
   recipients: { msisdn: string; lang: string; variables?: Record<string, string> }[];
 }
 
 export async function fetchAudience(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/audience/`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function createAudience(campaignId: number, data: AudiencePayload) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/audience/`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -399,7 +299,7 @@ export async function createAudience(campaignId: number, data: AudiencePayload) 
 }
 
 export async function updateAudience(campaignId: number, data: AudiencePayload) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/audience/`, {
     method: "PUT",
     headers: authHeaders(),
     body: JSON.stringify(data),
@@ -408,7 +308,7 @@ export async function updateAudience(campaignId: number, data: AudiencePayload) 
 }
 
 export async function deleteAudience(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/audience/`, {
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/audience/`, {
     method: "DELETE",
     headers: authHeaders(),
   });
@@ -418,9 +318,7 @@ export async function deleteAudience(campaignId: number) {
 /* -------- Progress & Batches -------- */
 
 export async function fetchCampaignProgress(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/progress/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/progress/`, { headers: authHeaders() });
   return handleResponse<{
     campaign_id: number;
     campaign_name: string;
@@ -431,38 +329,28 @@ export async function fetchCampaignProgress(campaignId: number) {
 
 export async function fetchCampaignBatches(campaignId: number, status?: string) {
   const params = status ? `?status=${status}` : "";
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/batches/${params}`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/batches/${params}`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 export async function fetchCampaignCheckpoint(campaignId: number) {
-  const res = await authFetch(`${API_BASE}/api/campaigns/${campaignId}/checkpoint/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/${campaignId}/checkpoint/`, { headers: authHeaders() });
   return handleResponse(res);
 }
 
 /* -------- Utility -------- */
 
 export async function fetchChannelChoices() {
-  const res = await authFetch(`${API_BASE}/api/campaigns/channel-choices/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/channel-choices/`, { headers: authHeaders() });
   return handleResponse<{ value: string; display: string }[]>(res);
 }
 
 export async function fetchExecutionStatusChoices() {
-  const res = await authFetch(`${API_BASE}/api/campaigns/execution-status-choices/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/execution-status-choices/`, { headers: authHeaders() });
   return handleResponse<{ value: string; display: string }[]>(res);
 }
 
 export async function fetchCampaignSummary() {
-  const res = await authFetch(`${API_BASE}/api/campaigns/summary/`, {
-    headers: authHeaders(),
-  });
+  const res = await authFetch(`${API_BASE_LOCAL}/api/campaigns/summary/`, { headers: authHeaders() });
   return handleResponse(res);
 }
